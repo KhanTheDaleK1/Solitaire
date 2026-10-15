@@ -426,7 +426,7 @@ class SolitaireApp {
       loggedInView.classList.remove('hidden');
 
       document.getElementById('user-name')!.textContent = user.displayName || 'Player';
-      document.getElementById('user-email')!.textContent = user.email || 'offline@solitare.beechem.site';
+      document.getElementById('user-email')!.textContent = user.email || '';
       document.getElementById('user-provider')!.textContent = user.provider.toUpperCase();
       const userImg = document.getElementById('user-avatar') as HTMLImageElement;
       if (user.photoURL) userImg.src = user.photoURL;

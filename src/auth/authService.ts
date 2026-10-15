@@ -72,16 +72,8 @@ export class AuthService {
   }
 
   private loadLocalGuest(): void {
-    const savedUser = localStorage.getItem('solitaire_guest_user');
-    if (savedUser) {
-      try {
-        this.currentUser = JSON.parse(savedUser);
-      } catch {
-        this.currentUser = null;
-      }
-    } else {
-      this.currentUser = null;
-    }
+    localStorage.removeItem('solitaire_guest_user');
+    this.currentUser = null;
   }
 
   public subscribe(callback: (user: AuthUser | null) => void): void {
@@ -117,18 +109,7 @@ export class AuthService {
       return this.currentUser;
     }
 
-    // Simulation / local developer mode when keys are not yet entered
-    const guestUser: AuthUser = {
-      uid: 'google-demo-user',
-      displayName: 'Demo Google Player',
-      email: 'player@beechem.site',
-      photoURL: 'https://api.dicebear.com/7.x/bottts/svg?seed=google',
-      provider: 'google'
-    };
-    localStorage.setItem('solitaire_guest_user', JSON.stringify(guestUser));
-    this.currentUser = guestUser;
-    this.notifySubscribers();
-    return guestUser;
+    throw new Error('Google Sign-In requires Firebase OAuth credentials to be configured in .env. Guest play is active.');
   }
 
   public async signInGitHub(): Promise<AuthUser> {
@@ -148,18 +129,7 @@ export class AuthService {
       return this.currentUser;
     }
 
-    // Simulation / local developer mode when keys are not yet entered
-    const githubUser: AuthUser = {
-      uid: 'github-demo-user',
-      displayName: 'KhanTheDaleK1 (Demo)',
-      email: 'evan.t.beechem@gmail.com',
-      photoURL: 'https://api.dicebear.com/7.x/bottts/svg?seed=github',
-      provider: 'github'
-    };
-    localStorage.setItem('solitaire_guest_user', JSON.stringify(githubUser));
-    this.currentUser = githubUser;
-    this.notifySubscribers();
-    return githubUser;
+    throw new Error('GitHub Sign-In requires Firebase OAuth credentials to be configured in .env. Guest play is active.');
   }
 
   public async signOut(): Promise<void> {
