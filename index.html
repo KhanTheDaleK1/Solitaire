@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
     
     <!-- Primary Meta Tags -->
-    <title>Solitare | Mobile-First Klondike PWA</title>
-    <meta name="title" content="Solitare | Mobile-First Klondike PWA" />
+    <title>Solitaire | Mobile-First Klondike PWA</title>
+    <meta name="title" content="Solitaire | Mobile-First Klondike PWA" />
     <meta name="description" content="A fast, touch-optimized, mobile-first Klondike Solitaire Progressive Web App with Google & GitHub cloud sync." />
     
     <!-- PWA & Mobile Web Capabilities -->
@@ -15,7 +15,7 @@
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-    <meta name="apple-mobile-web-app-title" content="Solitare" />
+    <meta name="apple-mobile-web-app-title" content="Solitaire" />
     
     <!-- Icons -->
     <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
@@ -230,8 +230,66 @@
               <span class="stat-box-label">Best Time</span>
             </div>
           </div>
+
+          <div class="stats-actions">
+            <button id="btn-open-import" class="btn-secondary">
+              <svg viewBox="0 0 24 24" class="icon"><path fill="currentColor" d="M9 16h6v-6h4l-7-7-7 7h4zm-4 2h14v2H5z"/></svg>
+              <span>Import MobilityWare Save</span>
+            </button>
+            <button id="btn-export-stats" class="btn-secondary">
+              <svg viewBox="0 0 24 24" class="icon"><path fill="currentColor" d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/></svg>
+              <span>Export Backup</span>
+            </button>
+          </div>
         </div>
       </div>
+
+      <!-- Import MobilityWare Save Modal -->
+      <div id="modal-import" class="modal-card hidden">
+        <div class="modal-header">
+          <h2>Import Save Data</h2>
+          <button class="modal-close-btn" data-close>&times;</button>
+        </div>
+        <div class="modal-body">
+          <p class="auth-intro">Import your existing stats from <strong>MobilityWare Solitaire</strong> (Android <code>.xml</code>, iOS <code>.plist</code>, <code>.sqlite</code>, or <code>.json</code>).</p>
+          
+          <div id="drop-zone" class="drop-zone">
+            <svg viewBox="0 0 24 24" class="drop-icon"><path fill="currentColor" d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
+            <span class="drop-text">Drag & drop your save file here</span>
+            <span class="drop-sub">or</span>
+            <label class="btn-file-select">
+              Browse File
+              <input type="file" id="import-file-input" accept=".xml,.plist,.json,.sqlite,.db,.txt" hidden />
+            </label>
+          </div>
+
+          <div class="manual-paste-toggle">
+            <button id="btn-toggle-paste" class="text-btn">Or paste raw save text / XML</button>
+          </div>
+
+          <div id="paste-area-box" class="paste-box hidden">
+            <textarea id="import-paste-text" placeholder="Paste your MobilityWare shared_prefs XML, plist, or JSON here..."></textarea>
+            <button id="btn-parse-paste" class="btn-secondary">Parse Pasted Data</button>
+          </div>
+
+          <div id="import-preview-box" class="import-preview hidden">
+            <div class="preview-header">
+              <span class="preview-title">Detected Stats</span>
+              <span id="import-source-badge" class="user-badge">MobilityWare XML</span>
+            </div>
+            <div class="preview-grid">
+              <div class="prev-item"><span class="prev-lbl">Played:</span> <span id="prev-played" class="prev-val">0</span></div>
+              <div class="prev-item"><span class="prev-lbl">Won:</span> <span id="prev-won" class="prev-val">0</span></div>
+              <div class="prev-item"><span class="prev-lbl">Win %:</span> <span id="prev-rate" class="prev-val">0%</span></div>
+              <div class="prev-item"><span class="prev-lbl">Streak:</span> <span id="prev-streak" class="prev-val">0</span></div>
+              <div class="prev-item"><span class="prev-lbl">Score:</span> <span id="prev-score" class="prev-val">0</span></div>
+              <div class="prev-item"><span class="prev-lbl">Best Time:</span> <span id="prev-time" class="prev-val">--:--</span></div>
+            </div>
+
+            <div class="import-actions">
+              <button id="btn-confirm-import" class="btn-primary">Apply to Solitaire</button>
+            </div>
+          </div>
 
       <!-- Auth Modal -->
       <div id="modal-auth" class="modal-card hidden">

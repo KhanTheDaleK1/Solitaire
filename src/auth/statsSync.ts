@@ -61,6 +61,29 @@ export class StatsManager {
     return this.getStats();
   }
 
+  public importStats(imported: UserStats, merge: boolean = false): UserStats {
+    if (merge) {
+      this.stats.gamesPlayed += imported.gamesPlayed;
+      this.stats.gamesWon += imported.gamesWon;
+      this.stats.bestStreak = Math.max(this.stats.bestStreak, imported.bestStreak);
+      this.stats.bestScore = Math.max(this.stats.bestScore, imported.bestScore);
+      if (imported.bestTime !== null) {
+        this.stats.bestTime = this.stats.bestTime === null
+          ? imported.bestTime
+          : Math.min(this.stats.bestTime, imported.bestTime);
+      }
+    } else {
+      this.stats = { ...imported };
+    }
+
+    this.saveStats();
+    return this.getStats();
+  }
+
+  public exportStatsJson(): string {
+    return JSON.stringify(this.stats, null, 2);
+  }
+
   public resetStats(): void {
     this.stats = {
       gamesPlayed: 0,

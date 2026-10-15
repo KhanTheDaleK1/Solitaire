@@ -1,8 +1,8 @@
-# Solitare | Mobile-First Klondike PWA
+# Solitaire | Mobile-First Klondike PWA
 
 A fast, touch-optimized, offline-first Klondike Solitaire Progressive Web Application (PWA) designed for mobile devices and modern browsers, reachable at [solitare.beechem.site](https://solitare.beechem.site). Features Google and GitHub authentication for syncing player statistics and high scores across devices.
 
-![Solitare PWA Icon](/public/icons/icon-192.png)
+![Solitaire PWA Icon](/public/icons/icon-192.png)
 
 ## Highlights
 
@@ -40,8 +40,8 @@ A fast, touch-optimized, offline-first Klondike Solitaire Progressive Web Applic
 
 ```bash
 # 1. Clone repository
-git clone https://github.com/KhanTheDaleK1/Solitare.git
-cd Solitare
+git clone https://github.com/KhanTheDaleK1/Solitaire.git
+cd Solitaire
 
 # 2. Install dependencies
 npm install
@@ -77,7 +77,7 @@ To enable real Google and GitHub OAuth:
    ```
 5. Rebuild or run `npm run dev`.
 
-*Note: If credentials are not provided, Solitare automatically runs in **Guest Mode**, allowing immediate gameplay and local stats persistence.*
+*Note: If credentials are not provided, Solitaire automatically runs in **Guest Mode**, allowing immediate gameplay and local stats persistence.*
 
 ---
 
@@ -98,7 +98,7 @@ Ensure your tunnel config directs traffic for `solitare.beechem.site` to `http:/
 
 ### Option 2: Cloudflare Pages / Static Hosting
 
-1. Link the GitHub repository `KhanTheDaleK1/Solitare` in Cloudflare Pages.
+1. Link the GitHub repository `KhanTheDaleK1/Solitaire` in Cloudflare Pages.
 2. Build command: `npm run build`
 3. Output directory: `dist`
 4. Add the custom domain `solitare.beechem.site`.
@@ -108,7 +108,7 @@ Ensure your tunnel config directs traffic for `solitare.beechem.site` to `http:/
 ## Project Structure
 
 ```
-17_Solitare/
+17_Solitaire/
 ├── .gitignore
 ├── GEMINI.md               # Gemini project guide (ignored by git)
 ├── README.md               # Project overview & documentation

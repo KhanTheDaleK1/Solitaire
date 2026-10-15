@@ -5,7 +5,8 @@ import { CardRenderer } from './ui/cardRenderer';
 import { DragDropManager } from './game/dragDrop';
 import { AuthService } from './auth/authService';
 import { StatsManager } from './auth/statsSync';
-import { GameState, DrawMode } from './game/types';
+import { MobilityWareImporter } from './auth/importer';
+import { GameState, DrawMode, UserStats } from './game/types';
 
 class SolitaireApp {
   private engine: SolitaireEngine;
@@ -31,6 +32,8 @@ class SolitaireApp {
   private settingsModal: HTMLElement;
   private statsModal: HTMLElement;
   private authModal: HTMLElement;
+  private importModal: HTMLElement;
+  private pendingImportStats: UserStats | null = null;
 
   constructor() {
     this.engine = new SolitaireEngine(1);
@@ -63,6 +66,7 @@ class SolitaireApp {
     this.settingsModal = document.getElementById('modal-settings')!;
     this.statsModal = document.getElementById('modal-stats')!;
     this.authModal = document.getElementById('modal-auth')!;
+    this.importModal = document.getElementById('modal-import')!;
 
     this.initEventListeners();
     this.initTimer();
@@ -205,6 +209,141 @@ class SolitaireApp {
     document.getElementById('btn-logout')?.addEventListener('click', async () => {
       await this.auth.signOut();
     });
+
+    // Import & Export buttons
+    document.getElementById('btn-open-import')?.addEventListener('click', () => {
+      this.openModal(this.importModal);
+    });
+
+    document.getElementById('btn-export-stats')?.addEventListener('click', () => {
+      this.exportStats();
+    });
+
+    this.initImportListeners();
+  }
+
+  private initImportListeners(): void {
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('import-file-input') as HTMLInputElement;
+    const btnTogglePaste = document.getElementById('btn-toggle-paste');
+    const pasteBox = document.getElementById('paste-area-box');
+    const btnParsePaste = document.getElementById('btn-parse-paste');
+    const pasteTextarea = document.getElementById('import-paste-text') as HTMLTextAreaElement;
+    const btnConfirmImport = document.getElementById('btn-confirm-import');
+
+    if (btnTogglePaste && pasteBox) {
+      btnTogglePaste.addEventListener('click', () => {
+        pasteBox.classList.toggle('hidden');
+      });
+    }
+
+    if (btnParsePaste && pasteTextarea) {
+      btnParsePaste.addEventListener('click', () => {
+        const text = pasteTextarea.value.trim();
+        if (!text) {
+          alert('Please paste MobilityWare XML, plist, or JSON save text first.');
+          return;
+        }
+        const parsed = MobilityWareImporter.parse(text);
+        this.displayImportPreview(parsed);
+      });
+    }
+
+    if (fileInput) {
+      fileInput.addEventListener('change', () => {
+        const file = fileInput.files?.[0];
+        if (file) {
+          this.processImportFile(file);
+        }
+      });
+    }
+
+    if (dropZone) {
+      dropZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        dropZone.classList.add('drag-over');
+      });
+
+      dropZone.addEventListener('dragleave', () => {
+        dropZone.classList.remove('drag-over');
+      });
+
+      dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('drag-over');
+        const file = e.dataTransfer?.files?.[0];
+        if (file) {
+          this.processImportFile(file);
+        }
+      });
+    }
+
+    if (btnConfirmImport) {
+      btnConfirmImport.addEventListener('click', () => {
+        if (!this.pendingImportStats) return;
+        this.statsManager.importStats(this.pendingImportStats);
+        this.sound.playWinFanfare();
+        alert('MobilityWare stats successfully imported!');
+        this.renderStatsModal();
+        this.openModal(this.statsModal);
+      });
+    }
+  }
+
+  private processImportFile(file: File): void {
+    const reader = new FileReader();
+    const isBinary = file.name.endsWith('.sqlite') || file.name.endsWith('.db');
+
+    reader.onload = () => {
+      const result = reader.result;
+      if (result) {
+        const parsed = MobilityWareImporter.parse(result);
+        this.displayImportPreview(parsed);
+      }
+    };
+
+    if (isBinary) {
+      reader.readAsArrayBuffer(file);
+    } else {
+      reader.readAsText(file);
+    }
+  }
+
+  private displayImportPreview(parsed: ReturnType<typeof MobilityWareImporter.parse>): void {
+    this.pendingImportStats = parsed.stats;
+    const previewBox = document.getElementById('import-preview-box');
+    const badge = document.getElementById('import-source-badge');
+
+    if (badge) {
+      badge.textContent = parsed.sourceType.toUpperCase();
+    }
+
+    document.getElementById('prev-played')!.textContent = parsed.stats.gamesPlayed.toString();
+    document.getElementById('prev-won')!.textContent = parsed.stats.gamesWon.toString();
+    const rate = parsed.stats.gamesPlayed > 0 ? Math.round((parsed.stats.gamesWon / parsed.stats.gamesPlayed) * 100) : 0;
+    document.getElementById('prev-rate')!.textContent = `${rate}%`;
+    document.getElementById('prev-streak')!.textContent = parsed.stats.bestStreak.toString();
+    document.getElementById('prev-score')!.textContent = parsed.stats.bestScore.toString();
+
+    if (parsed.stats.bestTime !== null) {
+      const mins = Math.floor(parsed.stats.bestTime / 60);
+      const secs = parsed.stats.bestTime % 60;
+      document.getElementById('prev-time')!.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    } else {
+      document.getElementById('prev-time')!.textContent = '--:--';
+    }
+
+    previewBox?.classList.remove('hidden');
+  }
+
+  private exportStats(): void {
+    const dataStr = 'data:text/json;charset=utf-8,' + encodeURIComponent(this.statsManager.exportStatsJson());
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute('href', dataStr);
+    downloadAnchor.setAttribute('download', `solitaire-stats-backup-${new Date().toISOString().slice(0, 10)}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
   }
 
   private initTimer(): void {
@@ -385,13 +524,13 @@ class SolitaireApp {
 
   private openModal(modal: HTMLElement): void {
     this.modalContainer.classList.remove('hidden');
-    [this.winModal, this.settingsModal, this.statsModal, this.authModal].forEach(m => m.classList.add('hidden'));
+    [this.winModal, this.settingsModal, this.statsModal, this.authModal, this.importModal].forEach(m => m.classList.add('hidden'));
     modal.classList.remove('hidden');
   }
 
   private closeModals(): void {
     this.modalContainer.classList.add('hidden');
-    [this.winModal, this.settingsModal, this.statsModal, this.authModal].forEach(m => m.classList.add('hidden'));
+    [this.winModal, this.settingsModal, this.statsModal, this.authModal, this.importModal].forEach(m => m.classList.add('hidden'));
   }
 
   private renderStatsModal(): void {

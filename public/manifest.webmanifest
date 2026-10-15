@@ -1,6 +1,6 @@
 {
-  "name": "Solitare | Mobile-First Klondike",
-  "short_name": "Solitare",
+  "name": "Solitaire | Mobile-First Klondike",
+  "short_name": "Solitaire",
   "description": "Mobile-first Klondike Solitaire PWA with Google & GitHub Cloud Sync",
   "start_url": "/",
   "id": "/",

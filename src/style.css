@@ -861,6 +861,174 @@ input:checked + .toggle-slider:before {
   transform: scale(0.98);
 }
 
+/* Secondary & Action Buttons */
+.btn-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--text-main);
+  padding: 10px 14px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  width: 100%;
+}
+
+.btn-secondary:active {
+  transform: scale(0.97);
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.btn-secondary .icon {
+  width: 18px;
+  height: 18px;
+}
+
+.stats-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+/* Import Drop Zone */
+.drop-zone {
+  border: 2px dashed rgba(255, 255, 255, 0.25);
+  border-radius: 14px;
+  padding: 24px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.03);
+  text-align: center;
+  transition: all 0.2s ease;
+}
+
+.drop-zone.drag-over {
+  border-color: var(--accent-gold);
+  background: rgba(245, 158, 11, 0.1);
+}
+
+.drop-icon {
+  width: 36px;
+  height: 36px;
+  color: var(--accent-gold);
+  opacity: 0.85;
+}
+
+.drop-text {
+  font-size: 13px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.drop-sub {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.btn-file-select {
+  background: var(--accent-gold);
+  color: #000;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 6px 16px;
+  border-radius: 20px;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+  transition: transform 0.15s ease;
+}
+
+.btn-file-select:active {
+  transform: scale(0.95);
+}
+
+.manual-paste-toggle {
+  text-align: center;
+}
+
+.text-btn {
+  background: transparent;
+  border: none;
+  color: var(--accent-gold);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.paste-box {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.paste-box textarea {
+  width: 100%;
+  height: 90px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  color: #fff;
+  font-family: monospace;
+  font-size: 11px;
+  padding: 8px;
+  resize: vertical;
+}
+
+/* Import Preview Grid */
+.import-preview {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.preview-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.preview-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #fff;
+}
+
+.preview-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+}
+
+.prev-item {
+  font-size: 12px;
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 8px;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+}
+
+.prev-lbl {
+  color: var(--text-muted);
+}
+
+.prev-val {
+  font-weight: 700;
+  color: var(--accent-gold);
+}
+
 /* Win Canvas */
 .win-canvas {
   position: fixed;
