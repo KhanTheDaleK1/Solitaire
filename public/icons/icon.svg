@@ -1,0 +1,52 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <radialGradient id="bg" cx="50%" cy="35%" r="70%">
+      <stop offset="0%" stop-color="#145a32" />
+      <stop offset="100%" stop-color="#0a2618" />
+    </radialGradient>
+    <linearGradient id="cardGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#ffffff" />
+      <stop offset="100%" stop-color="#f0f3f6" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="125%" height="125%">
+      <feDropShadow dx="0" dy="16" stdDeviation="18" flood-color="#000000" flood-opacity="0.45" />
+    </filter>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24" />
+      <stop offset="100%" stop-color="#d97706" />
+    </linearGradient>
+  </defs>
+
+  <!-- App Background (Squircle) -->
+  <rect width="512" height="512" rx="112" fill="url(#bg)" />
+
+  <!-- Subtle Felt Texture Rim -->
+  <rect x="12" y="12" width="488" height="488" rx="100" fill="none" stroke="#22c55e" stroke-width="3" stroke-opacity="0.2" />
+
+  <!-- Tilted Background Card (Red Diamond) -->
+  <g transform="rotate(-12 240 270)" filter="url(#shadow)">
+    <rect x="156" y="110" width="180" height="260" rx="16" fill="#fdf2f2" stroke="#e2e8f0" stroke-width="2" />
+    <path d="M 246 200 L 268 240 L 246 280 L 224 240 Z" fill="#dc2626" />
+  </g>
+
+  <!-- Foreground Main Playing Card (Ace of Spades) -->
+  <g transform="rotate(6 265 260)" filter="url(#shadow)">
+    <rect x="166" y="100" width="180" height="260" rx="16" fill="url(#cardGrad)" stroke="#cbd5e1" stroke-width="2" />
+    
+    <!-- Top-Left Corner Index -->
+    <text x="182" y="132" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="28" font-weight="900" fill="#0f172a">A</text>
+    <path d="M 188 142 C 182 147 182 153 188 158 C 194 153 194 147 188 142 Z M 188 156 L 188 162 Z" fill="#0f172a" />
+
+    <!-- Center Giant Spade with Gold Crown -->
+    <!-- Crown -->
+    <path d="M 230 182 L 238 196 L 256 182 L 274 196 L 282 182 L 280 206 L 232 206 Z" fill="url(#gold)" />
+    <circle cx="230" cy="180" r="3" fill="#fbbf24" />
+    <circle cx="256" cy="180" r="3" fill="#fbbf24" />
+    <circle cx="282" cy="180" r="3" fill="#fbbf24" />
+
+    <!-- Spade Heart-Shape Curve -->
+    <path d="M 256 195 C 220 235 210 275 240 288 C 250 292 254 286 256 284 C 258 286 262 292 272 288 C 302 275 292 235 256 195 Z" fill="#0f172a" />
+    <!-- Spade Stem -->
+    <path d="M 256 280 Q 256 300 242 305 L 270 305 Q 256 300 256 280 Z" fill="#0f172a" />
+  </g>
+</svg>

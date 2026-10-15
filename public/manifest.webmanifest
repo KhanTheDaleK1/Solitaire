@@ -1,0 +1,40 @@
+{
+  "name": "Solitare | Mobile-First Klondike",
+  "short_name": "Solitare",
+  "description": "Mobile-first Klondike Solitaire PWA with Google & GitHub Cloud Sync",
+  "start_url": "/",
+  "id": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0a2618",
+  "theme_color": "#0d472a",
+  "categories": ["games", "entertainment"],
+  "icons": [
+    {
+      "src": "/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "New Game",
+      "short_name": "New",
+      "url": "/?action=new",
+      "icons": [{ "src": "/icons/icon.svg", "sizes": "any" }]
+    }
+  ]
+}

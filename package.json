@@ -1,0 +1,21 @@
+{
+  "name": "solitare-pwa",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Mobile-first Klondike Solitaire PWA with Google & GitHub authentication",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "canvas-confetti": "^1.9.4",
+    "firebase": "^11.4.0"
+  },
+  "devDependencies": {
+    "@types/canvas-confetti": "^1.9.0",
+    "typescript": "^5.8.2",
+    "vite": "^6.2.0"
+  }
+}

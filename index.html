@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+    
+    <!-- Primary Meta Tags -->
+    <title>Solitare | Mobile-First Klondike PWA</title>
+    <meta name="title" content="Solitare | Mobile-First Klondike PWA" />
+    <meta name="description" content="A fast, touch-optimized, mobile-first Klondike Solitaire Progressive Web App with Google & GitHub cloud sync." />
+    
+    <!-- PWA & Mobile Web Capabilities -->
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="theme-color" content="#0d472a" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Solitare" />
+    
+    <!-- Icons -->
+    <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
+    <link rel="stylesheet" href="/src/style.css" />
+  </head>
+  <body class="theme-classic">
+    <div id="app" class="app-container">
+      <!-- Top Navigation & Scoreboard -->
+      <header class="game-header">
+        <div class="header-left">
+          <button id="btn-menu" class="icon-btn" aria-label="Settings" title="Settings">
+            <svg viewBox="0 0 24 24" class="icon"><path fill="currentColor" d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+          </button>
+          <button id="btn-stats" class="icon-btn" aria-label="Statistics" title="Statistics">
+            <svg viewBox="0 0 24 24" class="icon"><path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 10h2v7H7zm4-3h2v10h-2zm4 6h2v4h-2z"/></svg>
+          </button>
+        </div>
+
+        <div class="header-stats">
+          <div class="stat-badge">
+            <span class="stat-label">SCORE</span>
+            <span id="stat-score" class="stat-value">0</span>
+          </div>
+          <div class="stat-badge">
+            <span class="stat-label">TIME</span>
+            <span id="stat-time" class="stat-value">00:00</span>
+          </div>
+          <div class="stat-badge">
+            <span class="stat-label">MOVES</span>
+            <span id="stat-moves" class="stat-value">0</span>
+          </div>
+        </div>
+
+        <div class="header-right">
+          <!-- Auth Profile Button -->
+          <button id="btn-auth" class="auth-btn" aria-label="User Account">
+            <span id="auth-avatar" class="avatar-placeholder">
+              <svg viewBox="0 0 24 24" class="icon"><path fill="currentColor" d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/></svg>
+            </span>
+            <span id="auth-label" class="auth-label">Sign In</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Main Playfield -->
+      <main id="playfield" class="playfield">
+        <!-- Top Board Section: Stock, Waste, Foundations -->
+        <section class="board-top">
+          <!-- Stock & Waste Piles -->
+          <div class="deck-area">
+            <div id="pile-stock" class="pile stock-pile" role="button" aria-label="Draw Stock">
+              <div class="card-placeholder stock-empty-slot">
+                <svg viewBox="0 0 24 24" class="slot-icon"><path fill="currentColor" d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
+              </div>
+            </div>
+            <div id="pile-waste" class="pile waste-pile" aria-label="Waste Pile">
+              <div class="card-placeholder"></div>
+            </div>
+          </div>
+
+          <div class="top-spacer"></div>
+
+          <!-- 4 Suit Foundations -->
+          <div class="foundations-area">
+            <div id="foundation-0" class="pile foundation-pile" data-suit="spades" aria-label="Foundation Spades">
+              <div class="card-placeholder suit-symbol">♠</div>
+            </div>
+            <div id="foundation-1" class="pile foundation-pile" data-suit="hearts" aria-label="Foundation Hearts">
+              <div class="card-placeholder suit-symbol">♥</div>
+            </div>
+            <div id="foundation-2" class="pile foundation-pile" data-suit="clubs" aria-label="Foundation Clubs">
+              <div class="card-placeholder suit-symbol">♣</div>
+            </div>
+            <div id="foundation-3" class="pile foundation-pile" data-suit="diamonds" aria-label="Foundation Diamonds">
+              <div class="card-placeholder suit-symbol">♦</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Tableau Columns (7 Cascading Columns) -->
+        <section id="tableau" class="tableau-area">
+          <div id="tableau-0" class="pile tableau-col" data-col="0"></div>
+          <div id="tableau-1" class="pile tableau-col" data-col="1"></div>
+          <div id="tableau-2" class="pile tableau-col" data-col="2"></div>
+          <div id="tableau-3" class="pile tableau-col" data-col="3"></div>
+          <div id="tableau-4" class="pile tableau-col" data-col="4"></div>
+          <div id="tableau-5" class="pile tableau-col" data-col="5"></div>
+          <div id="tableau-6" class="pile tableau-col" data-col="6"></div>
+        </section>
+      </main>
+
+      <!-- Bottom Controls Toolbar -->
+      <footer class="bottom-toolbar">
+        <button id="btn-new-game" class="toolbar-btn" title="New Game">
+          <svg viewBox="0 0 24 24" class="icon"><path fill="currentColor" d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
+          <span>New</span>
+        </button>
+        <button id="btn-undo" class="toolbar-btn" title="Undo Move">
+          <svg viewBox="0 0 24 24" class="icon"><path fill="currentColor" d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg>
+          <span>Undo</span>
+        </button>
+        <button id="btn-hint" class="toolbar-btn" title="Show Hint">
+          <svg viewBox="0 0 24 24" class="icon"><path fill="currentColor" d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7zm2.85 11.1l-.85.6V16h-4v-1.3l-.85-.6A5.006 5.006 0 0 1 7 9c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.63-.8 3.16-2.15 4.1z"/></svg>
+          <span>Hint</span>
+        </button>
+        <button id="btn-auto-finish" class="toolbar-btn btn-highlight hidden" title="Auto Finish Game">
+          <svg viewBox="0 0 24 24" class="icon"><path fill="currentColor" d="m19 9 1.25-2.75L23 5l-2.75-1.25L19 1l-1.25 2.75L15 5l2.75 1.25L19 9zm-7.5.5L9 4 6.5 9.5 1 12l5.5 2.5L9 20l2.5-5.5L17 12l-5.5-2.5zM19 15l-1.25 2.75L15 19l2.75 1.25L19 23l1.25-2.75L23 19l-2.75-1.25L19 15z"/></svg>
+          <span>Finish</span>
+        </button>
+      </footer>
+    </div>
+
+    <!-- Dragging Floating Layer -->
+    <div id="drag-layer" class="drag-layer"></div>
+
+    <!-- Canvas for Win Celebration & Cards Cascade -->
+    <canvas id="win-canvas" class="win-canvas hidden"></canvas>
+
+    <!-- Modals Container -->
+    <div id="modal-container" class="modal-backdrop hidden">
+      <!-- Settings Modal -->
+      <div id="modal-settings" class="modal-card hidden">
+        <div class="modal-header">
+          <h2>Game Settings</h2>
+          <button class="modal-close-btn" data-close>&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="setting-item">
+            <div class="setting-text">
+              <span class="setting-title">Draw Mode</span>
+              <span class="setting-desc">Draw 1 card or 3 cards at a time</span>
+            </div>
+            <div class="segmented-control">
+              <button class="segment-btn active" data-draw="1">Turn 1</button>
+              <button class="segment-btn" data-draw="3">Turn 3</button>
+            </div>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-text">
+              <span class="setting-title">Sound Effects</span>
+              <span class="setting-desc">Audio feedback for card moves</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggle-sound" checked />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-text">
+              <span class="setting-title">Haptic Feedback</span>
+              <span class="setting-desc">Vibrate on touch and drops</span>
+            </div>
+            <label class="toggle-switch">
+              <input type="checkbox" id="toggle-haptics" checked />
+              <span class="toggle-slider"></span>
+            </label>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-text">
+              <span class="setting-title">Theme</span>
+              <span class="setting-desc">Board felt color</span>
+            </div>
+            <div class="theme-picker">
+              <button class="theme-chip theme-chip-green active" data-theme="classic" title="Classic Green Felt"></button>
+              <button class="theme-chip theme-chip-blue" data-theme="royal" title="Royal Blue"></button>
+              <button class="theme-chip theme-chip-red" data-theme="crimson" title="Crimson"></button>
+              <button class="theme-chip theme-chip-dark" data-theme="midnight" title="Midnight Velvet"></button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats Modal -->
+      <div id="modal-stats" class="modal-card hidden">
+        <div class="modal-header">
+          <h2>Player Statistics</h2>
+          <button class="modal-close-btn" data-close>&times;</button>
+        </div>
+        <div class="modal-body">
+          <div class="stats-grid">
+            <div class="stat-box">
+              <span class="stat-number" id="stats-played">0</span>
+              <span class="stat-box-label">Played</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-number" id="stats-won">0</span>
+              <span class="stat-box-label">Won</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-number" id="stats-win-rate">0%</span>
+              <span class="stat-box-label">Win Rate</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-number" id="stats-streak">0</span>
+              <span class="stat-box-label">Streak</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-number" id="stats-best-score">0</span>
+              <span class="stat-box-label">Best Score</span>
+            </div>
+            <div class="stat-box">
+              <span class="stat-number" id="stats-best-time">--:--</span>
+              <span class="stat-box-label">Best Time</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Auth Modal -->
+      <div id="modal-auth" class="modal-card hidden">
+        <div class="modal-header">
+          <h2 id="auth-modal-title">Sign In / Account</h2>
+          <button class="modal-close-btn" data-close>&times;</button>
+        </div>
+        <div class="modal-body">
+          <!-- Logged Out View -->
+          <div id="auth-logged-out" class="auth-view">
+            <p class="auth-intro">Sign in to sync your high scores, win streaks, and Solitaire stats across devices at <strong>solitare.beechem.site</strong>.</p>
+            
+            <button id="btn-google-login" class="oauth-btn oauth-google">
+              <svg viewBox="0 0 24 24" class="oauth-icon">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+              </svg>
+              <span>Continue with Google</span>
+            </button>
+
+            <button id="btn-github-login" class="oauth-btn oauth-github">
+              <svg viewBox="0 0 24 24" class="oauth-icon" fill="currentColor">
+                <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+              </svg>
+              <span>Continue with GitHub</span>
+            </button>
+
+            <div class="auth-fallback-box">
+              <span class="auth-note">Offline Guest Mode is always active. No sign-in required to play.</span>
+            </div>
+          </div>
+
+          <!-- Logged In View -->
+          <div id="auth-logged-in" class="auth-view hidden">
+            <div class="user-card">
+              <img id="user-avatar" class="user-avatar-img" src="" alt="User Avatar" />
+              <div class="user-details">
+                <span id="user-name" class="user-name">Evan Beechem</span>
+                <span id="user-email" class="user-email">evan@beechem.site</span>
+                <span id="user-provider" class="user-badge">Google</span>
+              </div>
+            </div>
+
+            <div class="sync-status-box">
+              <div class="sync-status-indicator online"></div>
+              <span>Cloud stats synchronized with <strong>solitare.beechem.site</strong></span>
+            </div>
+
+            <button id="btn-logout" class="oauth-btn oauth-logout">
+              <span>Sign Out</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Victory Modal -->
+      <div id="modal-victory" class="modal-card victory-card hidden">
+        <div class="victory-header">
+          <div class="victory-crown">👑</div>
+          <h2>Victory!</h2>
+          <p class="victory-sub">You solved the deck!</p>
+        </div>
+        <div class="modal-body">
+          <div class="victory-stats">
+            <div class="v-stat">
+              <span class="v-label">Time</span>
+              <span id="v-time" class="v-val">02:14</span>
+            </div>
+            <div class="v-stat">
+              <span class="v-label">Score</span>
+              <span id="v-score" class="v-val">740</span>
+            </div>
+            <div class="v-stat">
+              <span class="v-label">Moves</span>
+              <span id="v-moves" class="v-val">112</span>
+            </div>
+          </div>
+          <button id="btn-victory-again" class="btn-primary">Play Another Hand</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- PWA Service Worker Registration & App script -->
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

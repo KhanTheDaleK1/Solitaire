@@ -1,0 +1,12 @@
+services:
+  solitare:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: solitare-pwa
+    restart: unless-stopped
+    ports:
+      - "8085:80"
+    environment:
+      - VIRTUAL_HOST=solitare.beechem.site
+      - LETSENCRYPT_HOST=solitare.beechem.site
