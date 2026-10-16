@@ -310,12 +310,17 @@ class SolitaireApp {
   }
 
   private displayImportPreview(parsed: ReturnType<typeof MobilityWareImporter.parse>): void {
+    if (parsed.stats.gamesPlayed === 0 && parsed.stats.gamesWon === 0) {
+      alert('Could not find any Solitaire statistics in the provided text/file. Please make sure it contains <statistics> or <category> tags.');
+      return;
+    }
+
     this.pendingImportStats = parsed.stats;
     const previewBox = document.getElementById('import-preview-box');
     const badge = document.getElementById('import-source-badge');
 
     if (badge) {
-      badge.textContent = parsed.sourceType.toUpperCase();
+      badge.textContent = parsed.sourceType.replace(/-/g, ' ').toUpperCase();
     }
 
     document.getElementById('prev-played')!.textContent = parsed.stats.gamesPlayed.toString();
@@ -334,6 +339,7 @@ class SolitaireApp {
     }
 
     previewBox?.classList.remove('hidden');
+    previewBox?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }
 
   private exportStats(): void {

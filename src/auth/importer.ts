@@ -2,7 +2,7 @@ import { UserStats } from '../game/types';
 
 export interface ParsedSaveData {
   stats: UserStats;
-  sourceType: 'mobilityware-xml' | 'mobilityware-plist' | 'json' | 'sqlite' | 'text-kvd' | 'unknown';
+  sourceType: 'mobilityware-xml' | 'mobilityware-statistics' | 'mobilityware-plist' | 'json' | 'sqlite' | 'text-kvd' | 'unknown';
   detectedFields: Record<string, number | string>;
   confidence: number;
 }
@@ -26,23 +26,112 @@ export class MobilityWareImporter {
 
     const trimmed = content.trim();
 
-    // 1. Android shared_prefs XML
+    // 1. MobilityWare Statistics XML (<statistics><category name="..."><stat name="...">)
+    if (trimmed.includes('<statistics') || (trimmed.includes('<category') && trimmed.includes('<stat'))) {
+      return this.parseMobilityWareStatisticsXml(trimmed);
+    }
+
+    // 2. Android shared_prefs XML (<map><int name="..." value="..." />)
     if (trimmed.includes('<map') || (trimmed.startsWith('<?xml') && trimmed.includes('<int'))) {
       return this.parseAndroidXml(trimmed);
     }
 
-    // 2. iOS Plist XML
+    // 3. iOS Plist XML (<plist><dict><key>...)
     if (trimmed.includes('<plist') || trimmed.includes('<!DOCTYPE plist')) {
       return this.parseApplePlist(trimmed);
     }
 
-    // 3. JSON format
+    // 4. JSON format
     if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
       return this.parseJson(trimmed);
     }
 
-    // 4. Key-Value or plain text
+    // 5. Key-Value or plain text
     return this.parseKeyValueText(trimmed);
+  }
+
+  /**
+   * Parses official MobilityWare Solitaire <statistics> XML format
+   */
+  public static parseMobilityWareStatisticsXml(xmlStr: string): ParsedSaveData {
+    const detected: Record<string, number | string> = {};
+
+    let totalWon = 0;
+    let totalLost = 0;
+    let shortestTimeSec: number | null = null;
+    let highestScore = 0;
+    let currentStreak = 0;
+    let longestStreak = 0;
+
+    // Match categories like <category name="Draw 1">...</category>
+    const categoryRegex = /<category\s+name="([^"]+)">([\s\S]*?)<\/category>/g;
+    let catMatch: RegExpExecArray | null;
+
+    while ((catMatch = categoryRegex.exec(xmlStr)) !== null) {
+      const catName = catMatch[1].trim();
+      const catBody = catMatch[2];
+
+      const statRegex = /<stat\s+name="([^"]+)"(?:\s+percentage="([^"]*)")?>([^<]*)<\/stat>/g;
+      let statMatch: RegExpExecArray | null;
+
+      while ((statMatch = statRegex.exec(catBody)) !== null) {
+        const statName = statMatch[1].trim();
+        const statVal = statMatch[3].trim();
+        const fieldKey = `${catName} - ${statName}`;
+        detected[fieldKey] = statVal;
+
+        // Klondike Draw 1 or Draw 3 statistics
+        if (catName.includes('Draw 1') || catName.includes('Draw 3')) {
+          if (statName === 'Games Won') {
+            const val = parseInt(statVal, 10);
+            if (!isNaN(val)) totalWon += val;
+          } else if (statName === 'Games Lost') {
+            const val = parseInt(statVal, 10);
+            if (!isNaN(val)) totalLost += val;
+          } else if (statName === 'Shortest Winning Time') {
+            const secs = this.parseTimeToSeconds(statVal);
+            if (secs > 0 && (shortestTimeSec === null || secs < shortestTimeSec)) {
+              shortestTimeSec = secs;
+            }
+          } else if (statName === 'High Standard Score' || statName.includes('High Score') || statName.includes('Score')) {
+            const score = parseInt(statVal, 10);
+            if (!isNaN(score) && score > highestScore) {
+              highestScore = score;
+            }
+          } else if (statName === 'Current Winning Streak') {
+            const streak = parseInt(statVal, 10);
+            if (!isNaN(streak)) currentStreak = streak;
+          } else if (statName === 'Longest Winning Streak') {
+            const streak = parseInt(statVal, 10);
+            if (!isNaN(streak) && streak > longestStreak) {
+              longestStreak = streak;
+            }
+          }
+        } else if (catName === 'Leveling') {
+          if (statName === 'Level') detected['Level'] = parseInt(statVal, 10) || statVal;
+          if (statName === 'Total Stars') detected['Stars'] = parseInt(statVal, 10) || statVal;
+        }
+      }
+    }
+
+    const gamesPlayed = totalWon + totalLost;
+    if (longestStreak < currentStreak) {
+      longestStreak = currentStreak;
+    }
+
+    return {
+      stats: {
+        gamesPlayed,
+        gamesWon: totalWon,
+        currentStreak,
+        bestStreak: longestStreak,
+        bestScore: highestScore,
+        bestTime: shortestTimeSec
+      },
+      sourceType: 'mobilityware-statistics',
+      detectedFields: detected,
+      confidence: 100
+    };
   }
 
   /**
@@ -51,7 +140,6 @@ export class MobilityWareImporter {
   public static parseAndroidXml(xmlStr: string): ParsedSaveData {
     const detected: Record<string, number | string> = {};
 
-    // Match <int name="key" value="123" /> or <long name="key" value="123" /> or <string name="key">123</string>
     const regexTag = /<(int|long|string|boolean)\s+name="([^"]+)"(?:\s+value="([^"]*)")?(?:>([^<]*)<\/(?:int|long|string|boolean)>)?/g;
     let match: RegExpExecArray | null;
 
@@ -71,7 +159,6 @@ export class MobilityWareImporter {
   public static parseApplePlist(plistStr: string): ParsedSaveData {
     const detected: Record<string, number | string> = {};
 
-    // Match <key>KeyName</key>\s*<integer>123</integer>
     const regex = /<key>([^<]+)<\/key>\s*<(integer|real|string)>([^<]+)<\/(?:integer|real|string)>/g;
     let match: RegExpExecArray | null;
 
@@ -119,7 +206,6 @@ export class MobilityWareImporter {
     const text = decoder.decode(bytes);
     const detected: Record<string, number | string> = {};
 
-    // Search for patterns like key names and neighboring numbers
     const keywords = [
       'gamesplayed', 'games_played', 'gameswon', 'games_won',
       'highscore', 'high_score', 'bestscore', 'best_score',
@@ -150,12 +236,31 @@ export class MobilityWareImporter {
       if (parts.length >= 2) {
         const key = parts[0].trim();
         const valStr = parts[1].trim();
-        const num = parseInt(valStr.replace(/[^0-9]/g, ''), 10);
-        detected[key] = isNaN(num) ? valStr : num;
+        const secs = this.parseTimeToSeconds(valStr);
+        detected[key] = secs > 0 ? secs : valStr;
       }
     }
 
     return this.mapDetectedToStats(detected, 'text-kvd');
+  }
+
+  /**
+   * Converts time strings like "0:52", "1:37", "03:15" into seconds
+   */
+  public static parseTimeToSeconds(timeStr: string): number {
+    if (!timeStr) return 0;
+    const clean = timeStr.trim();
+    if (clean.includes(':')) {
+      const parts = clean.split(':').map(p => parseInt(p, 10));
+      if (parts.length === 2 && !isNaN(parts[0]) && !isNaN(parts[1])) {
+        return parts[0] * 60 + parts[1];
+      }
+      if (parts.length === 3 && !isNaN(parts[0]) && !isNaN(parts[1]) && !isNaN(parts[2])) {
+        return parts[0] * 3600 + parts[1] * 60 + parts[2];
+      }
+    }
+    const num = parseInt(clean.replace(/[^0-9]/g, ''), 10);
+    return isNaN(num) ? 0 : num;
   }
 
   /**
@@ -175,7 +280,9 @@ export class MobilityWareImporter {
 
     for (const [rawKey, rawVal] of Object.entries(detected)) {
       const key = rawKey.toLowerCase().replace(/[^a-z0-9]/g, '');
-      const numVal = typeof rawVal === 'number' ? rawVal : parseInt(String(rawVal).replace(/[^0-9]/g, ''), 10);
+      const numVal = typeof rawVal === 'number'
+        ? rawVal
+        : (String(rawVal).includes(':') ? this.parseTimeToSeconds(String(rawVal)) : parseInt(String(rawVal).replace(/[^0-9]/g, ''), 10));
       if (isNaN(numVal)) continue;
 
       if (key.includes('gamesplayed') || key === 'played' || key.includes('totalgames')) {
@@ -190,11 +297,10 @@ export class MobilityWareImporter {
       } else if (key.includes('beststreak') || key.includes('maxstreak') || key.includes('longeststreak') || key.includes('longestwinningstreak')) {
         bestStreak = Math.max(bestStreak, numVal);
         fieldsMatched++;
-      } else if (key.includes('highscore') || key.includes('bestscore') || key.includes('topscore') || key === 'score') {
+      } else if (key.includes('highscore') || key.includes('bestscore') || key.includes('topscore') || key === 'score' || key.includes('highstandardscore')) {
         bestScore = Math.max(bestScore, numVal);
         fieldsMatched++;
-      } else if (key.includes('besttime') || key.includes('fastesttime') || key.includes('mintime') || key.includes('shortesttime') || key.includes('fastestwin')) {
-        // Handle milliseconds vs seconds
+      } else if (key.includes('besttime') || key.includes('fastesttime') || key.includes('mintime') || key.includes('shortestwinningtime') || key.includes('shortesttime')) {
         let seconds = numVal;
         if (seconds > 360000) {
           seconds = Math.round(seconds / 1000);

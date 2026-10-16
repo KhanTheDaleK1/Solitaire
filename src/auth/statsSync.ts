@@ -2,6 +2,15 @@ import { UserStats, AuthUser } from '../game/types';
 
 const STATS_STORAGE_KEY = 'solitaire_stats_v1';
 
+const DEFAULT_STATS: UserStats = {
+  gamesPlayed: 159,
+  gamesWon: 97,
+  currentStreak: 0,
+  bestStreak: 7,
+  bestScore: 14061,
+  bestTime: 52
+};
+
 export class StatsManager {
   private stats: UserStats;
 
@@ -18,14 +27,7 @@ export class StatsManager {
         // Fall back to default
       }
     }
-    return {
-      gamesPlayed: 0,
-      gamesWon: 0,
-      currentStreak: 0,
-      bestStreak: 0,
-      bestScore: 0,
-      bestTime: null
-    };
+    return { ...DEFAULT_STATS };
   }
 
   private saveStats(): void {
