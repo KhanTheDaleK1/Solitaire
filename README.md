@@ -1,143 +1,52 @@
-# Solitaire | Mobile-First Klondike PWA
+# Solitaire | MobilityWare Klondike PWA
 
-A fast, touch-optimized, offline-first Klondike Solitaire Progressive Web Application (PWA) designed for mobile devices and modern browsers, reachable at [solitare.beechem.site](https://solitare.beechem.site). Features Google and GitHub authentication for syncing player statistics and high scores across devices.
+A fast, touch-optimized, offline-capable **MobilityWare Solitaire** clone built as a Progressive Web Application (PWA), live at [solitaire.beechem.site](https://solitaire.beechem.site) (and [solitare.beechem.site](https://solitare.beechem.site)). Features 3D card flip animations, realistic card foley & ascending foundation chimes, Winning Deals, Daily Challenges, Jigsaw Puzzle events, Rankings, customizable card faces/backs/backgrounds, and Google & GitHub cloud sync.
 
 ![Solitaire PWA Icon](/public/icons/icon-192.png)
 
 ## Highlights
 
-- **Mobile-First Experience**:
-  - Touch gestures with haptic feedback (`navigator.vibrate`)
-  - Fluid multi-card drag-and-drop with natural cascading stack offsets
-  - Smart Single-Tap auto-move: tap any card to instantly send it to a foundation or legal tableau column
-  - Double-tap quick move
-  - iOS safe-area support (`viewport-fit=cover`, notch and home-bar padding)
-- **Authentic Klondike Solitaire**:
-  - Turn 1 & Turn 3 game modes
-  - Standard Vegas & Klondike scoring
-  - Unlimited Undo history
-  - Smart Hint solver
-  - Auto-Finish completion when all tableau cards are face up
-  - Iconic Windows-style cascading card bounce win celebration + confetti
-  - 4 felt table themes: Classic Emerald Felt, Royal Blue, Crimson, Midnight Velvet
-- **PWA & Offline Capability**:
-  - Installable to home screen (`manifest.webmanifest`)
-  - Background Service Worker (`sw.js`) caching assets for offline play
-- **Authentication**:
-  - Google & GitHub OAuth sign-in via Firebase Auth
-  - Offline Guest mode with local high-score tracking
+- **MobilityWare Gameplay & Animations**:
+  - **3D Card Flip Animations** (`rotateY` 3D perspective turn) and staggered **Deal Riffle** animations
+  - **Play Menu**: *Winning Deal* (guaranteed solvable), *Random Shuffle*, *Replay Current Deal*, and *Daily Challenge*
+  - **Turn 1 & Turn 3** draw modes + **Standard** and **Vegas** (`-$52` buy-in) scoring modes
+  - Smart Single-Tap auto-move, multi-card drag-and-drop, Left-Handed mode, Unlimited Undo, Hint solver, and Auto Complete
+  - Iconic cascading card bounce victory celebration + confetti
+- **MobilityWare Sound Effects**:
+  - Web Audio paper-friction card flip & placement foley
+  - Staggered 7-column deal riffle and stock recycle shuffle sounds
+  - **13-Rank Ascending Foundation Chimes** (Ace through King musical progression)
+- **Daily Challenges, Jigsaw Puzzles & Rankings**:
+  - **Daily Crown Calendar**: Deterministic daily deals with monthly Bronze, Silver, and Gold Trophies
+  - **Jigsaw Puzzle Events**: 6 interactive 16-piece jigsaw puzzles (*Autumn Cabin*, *Tropical Cove*, *Alpine Express*, *Starlight Castle*, *Golden Reef*, *Royal Gardens*)
+  - **Rankings & Leaderboards**: Player XP/Stars leveling, Rank Titles (*Solitaire Royalty*, *Grandmaster*, etc.), and All-Time Leaderboard
+- **Card Designs & Table Backgrounds**:
+  - **4 Card Face Styles**: Classic (with illustrated SVG Jack/Queen/King court portraits, top-right suit pips, and ornate Ace of Spades), Big Index, Dark, and Crown
+  - **6 Card Back Designs**: Blue Lattice, Red Lattice, Royal Crown, Ocean Wave, Emerald Crest, and Starlight Galaxy
+  - **8 Table Backgrounds**: Classic Green Felt, Royal Blue, Casino Crimson, Mahogany Wood, Tropical Ocean, Starlight Sky, Royal Amethyst, and Midnight Obsidian
+- **Authentication & Cloud Save Sync**:
+  - **GitHub & Google Account Sign-In**: Seamless popup & instant profile sign-in with server-side cloud save synchronization (`/api/cloud/sync`)
+  - **MobilityWare Save Importer**: Import stats directly from Android `.xml`, iOS `.plist`, `.sqlite`, or `.json` backups
 
 ---
 
 ## Getting Started
 
-### Prerequisites
-
-- Node.js (v18+)
-- npm
-
 ### Local Development
 
 ```bash
-# 1. Clone repository
-git clone https://github.com/KhanTheDaleK1/Solitaire.git
-cd Solitaire
-
-# 2. Install dependencies
+# 1. Install dependencies
 npm install
 
-# 3. Start local development server
+# 2. Build production bundle
+npm run build
+
+# 3. Start production server (http://127.0.0.1:3333)
+npm start
+
+# Or run Vite dev server (http://localhost:3000)
 npm run dev
 ```
-
-Visit `http://localhost:3000` on your mobile browser or desktop.
-
----
-
-## Dedicated CLI Terminal Client
-
-A full-featured terminal edition implementing the MobilityWare visual style and mechanics directly in your command line:
-
-```bash
-# Launch terminal game
-./solitaire
-
-# Play Today's Daily Challenge (deterministic calendar seed)
-./solitaire --daily
-
-# Play with Draw 3 rules
-./solitaire --draw 3
-
-# Import a MobilityWare XML save file directly
-./solitaire --import-xml path/to/save.xml
-```
-
-### CLI Controls & Navigation
-- **Hotkeys**:
-  - `Space` or `d`: Draw card from stock
-  - `1`..`7`: Auto-move top card from Tableau column `T1`..`T7`
-  - `w`: Auto-move from Waste pile
-  - `u`: Undo move
-  - `h`: Show hint
-  - `f`: Auto-finish remaining cards
-  - `c`: Open Daily Challenge Crown Calendar & Trophies view
-  - `q`: Quit game
-- **Positional Commands**:
-  - `move W T3` (or `w 3`): Move waste card to Tableau 3
-  - `move T2:8H T5` (or `t2 5`): Move stack starting at 8♥ to Tableau 5
-  - `auto T4` (or `a 4`): Auto-move card to foundation or valid tableau
-  - `finish`: Autocomplete hand when face-down cards are revealed
-
----
-
-## Setting Up Google & GitHub Authentication
-
-To enable real Google and GitHub OAuth:
-
-1. Create a Firebase project at [Firebase Console](https://console.firebase.google.com).
-2. Go to **Authentication** > **Sign-in method**:
-   - Enable **Google**
-   - Enable **GitHub**:
-     - Register an OAuth app in GitHub: *Settings > Developer settings > OAuth Apps*.
-     - Set the Authorization callback URL to the URL provided in Firebase (e.g. `https://<project-id>.firebaseapp.com/__/auth/handler`).
-     - Enter your GitHub Client ID and Client Secret in Firebase.
-3. In Firebase Project Settings, add a Web App and copy your config.
-4. Create `.env` in the project root:
-   ```env
-   VITE_FIREBASE_API_KEY=AIzaSy...
-   VITE_FIREBASE_AUTH_DOMAIN=solitare-project.firebaseapp.com
-   VITE_FIREBASE_PROJECT_ID=solitare-project
-   VITE_FIREBASE_STORAGE_BUCKET=solitare-project.appspot.com
-   VITE_FIREBASE_MESSAGING_SENDER_ID=123456789
-   VITE_FIREBASE_APP_ID=1:123456789:web:abcdef
-   ```
-5. Rebuild or run `npm run dev`.
-
-*Note: If credentials are not provided, Solitaire automatically runs in **Guest Mode**, allowing immediate gameplay and local stats persistence.*
-
----
-
-## Deployment to `solitare.beechem.site`
-
-### Option 1: Docker & Cloudflare Tunnel (Self-Hosted)
-
-Run the container:
-```bash
-docker compose up -d --build
-```
-
-The container exposes port `8085`. Route it via Cloudflare Tunnel:
-```bash
-cloudflared tunnel route dns <tunnel-name> solitare.beechem.site
-```
-Ensure your tunnel config directs traffic for `solitare.beechem.site` to `http://localhost:8085`.
-
-### Option 2: Cloudflare Pages / Static Hosting
-
-1. Link the GitHub repository `KhanTheDaleK1/Solitaire` in Cloudflare Pages.
-2. Build command: `npm run build`
-3. Output directory: `dist`
-4. Add the custom domain `solitare.beechem.site`.
 
 ---
 
@@ -145,37 +54,41 @@ Ensure your tunnel config directs traffic for `solitare.beechem.site` to `http:/
 
 ```
 17_Solitaire/
+├── .env.example            # OAuth & optional Firebase environment template
 ├── .gitignore
-├── GEMINI.md               # Gemini project guide (ignored by git)
+├── GEMINI.md               # Project context guide (ignored by git)
 ├── README.md               # Project overview & documentation
 ├── package.json            # Node dependencies & build scripts
+├── server.js               # Production HTTP server, GitHub/Google OAuth & Cloud Sync API
 ├── tsconfig.json           # TypeScript configuration
-├── vite.config.ts          # Vite configuration
-├── nginx.conf              # Production Nginx configuration
+├── vite.config.ts          # Vite configuration with /api proxy
+├── nginx.conf              # Nginx configuration
 ├── Dockerfile              # Container multi-stage build
 ├── docker-compose.yml      # Docker compose configuration
-├── index.html              # PWA HTML shell & scoreboard
+├── index.html              # PWA HTML shell, HUD & modals
 ├── public/
 │   ├── manifest.webmanifest# PWA manifest
 │   ├── sw.js               # Offline service worker
 │   ├── robots.txt
 │   └── icons/              # Vector SVG & PNG PWA icons (192, 512)
 └── src/
-    ├── main.ts             # Application controller & state sync
-    ├── style.css           # Mobile-first felt & card styles
+    ├── main.ts             # Application controller, modals & state sync
+    ├── style.css           # Table themes, 3D animations, card faces & backs
     ├── vite-env.d.ts       # Vite environment types
     ├── auth/
-    │   ├── authService.ts  # Google & GitHub OAuth integration
-    │   └── statsSync.ts    # Stats tracker & cloud sync
+    │   ├── authService.ts  # Google & GitHub OAuth + instant profile sign-in
+    │   ├── statsSync.ts    # Stats tracker, Rank tiers, Puzzles & cloud sync
+    │   └── importer.ts     # MobilityWare XML/Plist/SQLite/JSON save importer
     ├── game/
-    │   ├── types.ts        # Card, GameState, and Pile types
-    │   ├── deck.ts         # Deck generator, shuffler & dealer
-    │   ├── engine.ts       # Klondike rules, tap-move, hints & undo
+    │   ├── types.ts        # Card, GameState, Animation, and Progression types
+    │   ├── deck.ts         # Deck generator, shuffler & Winning Deal generator
+    │   ├── dailyChallenge.ts # Deterministic Mulberry32 daily challenge dealer
+    │   ├── engine.ts       # Klondike & Vegas rules, tap-move, hints & undo
     │   ├── dragDrop.ts     # Mobile touch & pointer drag-and-drop
-    │   ├── sound.ts        # Synthesized audio & haptics
-    │   └── animator.ts     # Windows card bounce cascade & confetti
+    │   ├── sound.ts        # Synthesized paper foley & ascending chimes
+    │   └── animator.ts     # Cascading card bounce physics & confetti
     └── ui/
-        └── cardRenderer.ts # Card DOM element renderer
+        └── cardRenderer.ts # 3D card flipper & SVG court card renderer
 ```
 
 ---

@@ -1,10 +1,11 @@
-import { Card, GameState, PileLocation, CardMove, DrawMode } from './types';
-import { dealKlondike, getSuitColor } from './deck';
+import { Card, GameState, PileLocation, CardMove, DrawMode, ScoringMode } from './types';
+import { dealKlondike, dealWinningKlondike, getSuitColor } from './deck';
 import { dealDailyChallenge, formatDate } from './dailyChallenge';
 
 export class SolitaireEngine {
   public state: GameState;
   private onStateChange?: (state: GameState) => void;
+  private initialDeal?: { stock: Card[]; tableau: Card[][] };
 
   constructor(drawMode: DrawMode = 1) {
     this.state = this.createNewGame(drawMode);
@@ -24,24 +25,86 @@ export class SolitaireEngine {
   public createNewGame(
     drawMode: DrawMode = this.state?.drawMode || 1,
     isDailyChallenge: boolean = false,
-    dailyDate?: string
+    dailyDate?: string,
+    isWinningDeal: boolean = this.state?.isWinningDeal ?? true,
+    scoringMode: ScoringMode = this.state?.scoringMode || 'standard'
   ): GameState {
-    const deal = isDailyChallenge ? dealDailyChallenge(dailyDate) : dealKlondike();
+    const deal = isDailyChallenge
+      ? dealDailyChallenge(dailyDate)
+      : isWinningDeal
+      ? dealWinningKlondike()
+      : dealKlondike();
+
+    this.initialDeal = {
+      stock: deal.stock.map(c => ({ ...c })),
+      tableau: deal.tableau.map(col => col.map(c => ({ ...c })))
+    };
+
+    const topTableauIds = deal.tableau
+      .map(col => col[col.length - 1]?.id)
+      .filter((id): id is string => Boolean(id));
+
     this.state = {
       stock: deal.stock,
       waste: deal.waste,
       foundations: deal.foundations,
       tableau: deal.tableau,
       history: [],
-      score: 0,
+      score: scoringMode === 'vegas' ? -52 : 0,
       moves: 0,
       startTime: null,
       elapsedTime: 0,
       isWon: false,
       isStarted: false,
       drawMode,
+      scoringMode,
+      isWinningDeal,
       isDailyChallenge,
-      dailyDate: isDailyChallenge ? (dailyDate || formatDate()) : undefined
+      dailyDate: isDailyChallenge ? (dailyDate || formatDate()) : undefined,
+      stockPasses: 0,
+      lastAction: {
+        type: 'deal',
+        flippedCardIds: topTableauIds,
+        movedCardIds: [],
+        timestamp: Date.now()
+      }
+    };
+    this.notify();
+    return this.state;
+  }
+
+  public restartCurrentDeal(): GameState {
+    if (!this.initialDeal) {
+      return this.createNewGame(this.state.drawMode, this.state.isDailyChallenge, this.state.dailyDate, this.state.isWinningDeal, this.state.scoringMode);
+    }
+    const stock = this.initialDeal.stock.map(c => ({ ...c, faceUp: false }));
+    const tableau = this.initialDeal.tableau.map(col =>
+      col.map((c, idx) => ({ ...c, faceUp: idx === col.length - 1 }))
+    );
+    const topTableauIds = tableau
+      .map(col => col[col.length - 1]?.id)
+      .filter((id): id is string => Boolean(id));
+
+    this.state = {
+      ...this.state,
+      stock,
+      waste: [],
+      foundations: [[], [], [], []],
+      tableau,
+      history: [],
+      score: this.state.scoringMode === 'vegas' ? -52 : 0,
+      moves: 0,
+      startTime: null,
+      elapsedTime: 0,
+      isWon: false,
+      isStarted: false,
+      stockPasses: 0,
+      lastAction: {
+        type: 'deal',
+        flippedCardIds: topTableauIds,
+        movedCardIds: [],
+        timestamp: Date.now()
+      }
     };
     this.notify();
     return this.state;
@@ -63,26 +126,48 @@ export class SolitaireEngine {
       if (this.state.waste.length === 0) {
         return false;
       }
+
+      // Vegas mode pass limit check (1 pass for Draw 1, 3 passes for Draw 3)
+      if (this.state.scoringMode === 'vegas') {
+        const maxPasses = this.state.drawMode === 1 ? 0 : 2;
+        if (this.state.stockPasses >= maxPasses) {
+          return false;
+        }
+      }
+
       // Recycle waste into stock (reversed, face-down)
       const recycledCards = [...this.state.waste].reverse().map(c => {
         c.faceUp = false;
         return c;
       });
 
+      const scoreChange = this.state.scoringMode === 'vegas'
+        ? 0
+        : (this.state.drawMode === 1 ? -100 : -20);
+
       const move: CardMove = {
         cards: [...this.state.waste],
         from: { type: 'waste', index: 0 },
         to: { type: 'stock', index: 0 },
         cardFlipped: false,
-        scoreChange: this.state.drawMode === 1 ? -100 : -20, // standard recycle penalty
+        scoreChange,
         stockRecycled: true
       };
 
       this.state.stock = recycledCards;
       this.state.waste = [];
-      this.state.score = Math.max(0, this.state.score + move.scoreChange);
+      if (this.state.scoringMode === 'standard') {
+        this.state.score = Math.max(0, this.state.score + move.scoreChange);
+      }
+      this.state.stockPasses++;
       this.state.moves++;
       this.state.history.push(move);
+      this.state.lastAction = {
+        type: 'recycle',
+        flippedCardIds: [],
+        movedCardIds: recycledCards.map(c => c.id),
+        timestamp: Date.now()
+      };
       this.notify();
       return true;
     }
@@ -105,6 +190,14 @@ export class SolitaireEngine {
       cardFlipped: false,
       scoreChange: 0
     });
+
+    this.state.lastAction = {
+      type: 'draw',
+      flippedCardIds: drawn.map(c => c.id),
+      movedCardIds: drawn.map(c => c.id),
+      targetPile: { type: 'waste', index: 0 },
+      timestamp: Date.now()
+    };
 
     this.notify();
     return true;
@@ -150,21 +243,28 @@ export class SolitaireEngine {
     this.startTimer();
     let scoreChange = 0;
     let cardFlipped = false;
+    let flippedCardId: string | undefined;
 
     // Validate destination
     if (to.type === 'foundation') {
       if (cards.length !== 1 || !this.isValidFoundationMove(cards[0], to.index)) {
         return false;
       }
-      scoreChange += 10;
+      scoreChange += this.state.scoringMode === 'vegas' ? 5 : 10;
     } else if (to.type === 'tableau') {
       if (!this.isValidTableauMove(cards, to.index)) {
         return false;
       }
-      if (from.type === 'waste') {
-        scoreChange += 5;
-      } else if (from.type === 'foundation') {
-        scoreChange -= 15;
+      if (this.state.scoringMode === 'standard') {
+        if (from.type === 'waste') {
+          scoreChange += 5;
+        } else if (from.type === 'foundation') {
+          scoreChange -= 15;
+        }
+      } else {
+        if (from.type === 'foundation') {
+          scoreChange -= 5;
+        }
       }
     } else {
       return false;
@@ -178,9 +278,13 @@ export class SolitaireEngine {
       sourceCol.splice(sourceCol.length - cards.length, cards.length);
       // Flip up the new top card if face-down
       if (sourceCol.length > 0 && !sourceCol[sourceCol.length - 1].faceUp) {
-        sourceCol[sourceCol.length - 1].faceUp = true;
+        const revealedCard = sourceCol[sourceCol.length - 1];
+        revealedCard.faceUp = true;
         cardFlipped = true;
-        scoreChange += 5;
+        flippedCardId = revealedCard.id;
+        if (this.state.scoringMode === 'standard') {
+          scoreChange += 5;
+        }
       }
     } else if (from.type === 'foundation') {
       this.state.foundations[from.index].pop();
@@ -193,7 +297,11 @@ export class SolitaireEngine {
       this.state.tableau[to.index].push(...cards);
     }
 
-    this.state.score = Math.max(0, this.state.score + scoreChange);
+    if (this.state.scoringMode === 'standard') {
+      this.state.score = Math.max(0, this.state.score + scoreChange);
+    } else {
+      this.state.score += scoreChange;
+    }
     this.state.moves++;
 
     this.state.history.push({
@@ -201,8 +309,17 @@ export class SolitaireEngine {
       from,
       to,
       cardFlipped,
+      flippedCardId,
       scoreChange
     });
+
+    this.state.lastAction = {
+      type: 'move',
+      flippedCardIds: flippedCardId ? [flippedCardId] : [],
+      movedCardIds: cards.map(c => c.id),
+      targetPile: to,
+      timestamp: Date.now()
+    };
 
     this.checkWinCondition();
     this.notify();
@@ -272,6 +389,7 @@ export class SolitaireEngine {
         return c;
       });
       this.state.stock = [];
+      this.state.stockPasses = Math.max(0, this.state.stockPasses - 1);
     } else if (lastMove.from.type === 'stock' && lastMove.to.type === 'waste') {
       // Revert draw from stock
       const drawnCards = lastMove.cards;
@@ -312,9 +430,19 @@ export class SolitaireEngine {
       }
     }
 
-    this.state.score = Math.max(0, this.state.score - lastMove.scoreChange);
+    if (this.state.scoringMode === 'standard') {
+      this.state.score = Math.max(0, this.state.score - lastMove.scoreChange);
+    } else {
+      this.state.score -= lastMove.scoreChange;
+    }
     this.state.moves = Math.max(0, this.state.moves - 1);
     this.state.isWon = false;
+    this.state.lastAction = {
+      type: 'undo',
+      flippedCardIds: [],
+      movedCardIds: lastMove.cards.map(c => c.id),
+      timestamp: Date.now()
+    };
     this.notify();
     return true;
   }
@@ -349,7 +477,6 @@ export class SolitaireEngine {
     // 3. Check tableau to tableau moves that reveal a face-down card
     for (let srcCol = 0; srcCol < 7; srcCol++) {
       const col = this.state.tableau[srcCol];
-      // Find first face-up card
       const firstFaceUpIdx = col.findIndex(c => c.faceUp);
       if (firstFaceUpIdx > 0) {
         const movingStack = col.slice(firstFaceUpIdx);
@@ -379,7 +506,6 @@ export class SolitaireEngine {
       if (faceUpCards.length > 0) {
         for (let i = 0; i < faceUpCards.length; i++) {
           const movingStack = faceUpCards.slice(i);
-          // Don't move a King if it's already at the base of an empty column
           if (movingStack[0].rank === 13 && col.findIndex(c => c.id === movingStack[0].id) === 0) {
             continue;
           }
@@ -401,7 +527,6 @@ export class SolitaireEngine {
     if (this.state.stock.length > 0 || this.state.waste.length > 0) {
       return false;
     }
-    // Check if any face-down cards remain in tableau
     for (const col of this.state.tableau) {
       if (col.some(card => !card.faceUp)) {
         return false;

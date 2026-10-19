@@ -4,9 +4,10 @@ import { WinAnimator } from './game/animator';
 import { CardRenderer } from './ui/cardRenderer';
 import { DragDropManager } from './game/dragDrop';
 import { AuthService } from './auth/authService';
-import { StatsManager } from './auth/statsSync';
+import { StatsManager, MOBILITYWARE_PUZZLES, getPlayerRank } from './auth/statsSync';
 import { MobilityWareImporter } from './auth/importer';
-import { GameState, DrawMode, UserStats } from './game/types';
+import { GameState, DrawMode, ScoringMode, UserStats } from './game/types';
+import { formatDate } from './game/dailyChallenge';
 
 class SolitaireApp {
   private engine: SolitaireEngine;
@@ -20,6 +21,7 @@ class SolitaireApp {
 
   // DOM Elements
   private stockPileEl: HTMLElement;
+  private stockCountBadgeEl: HTMLElement;
   private wastePileEl: HTMLElement;
   private foundationEls: HTMLElement[];
   private tableauEls: HTMLElement[];
@@ -28,18 +30,22 @@ class SolitaireApp {
   private movesEl: HTMLElement;
   private autoFinishBtn: HTMLElement;
   private modalContainer: HTMLElement;
+  private playMenuModal: HTMLElement;
   private winModal: HTMLElement;
   private settingsModal: HTMLElement;
   private statsModal: HTMLElement;
   private authModal: HTMLElement;
   private importModal: HTMLElement;
   private calendarModal: HTMLElement;
+  private puzzlesModal: HTMLElement;
   private pendingImportStats: UserStats | null = null;
 
-  // Calendar State
+  // Calendar & Puzzle State
   private calYear: number = 2026;
   private calMonth: number = 9; // 0-indexed (9 = October)
   private selectedDate: string = '2026-10-19';
+  private activePuzzleId: string = 'autumn_cabin';
+  private lastAnimatedTimestamp: number = 0;
 
   constructor() {
     this.engine = new SolitaireEngine(1);
@@ -55,6 +61,7 @@ class SolitaireApp {
 
     // Cache DOM
     this.stockPileEl = document.getElementById('pile-stock')!;
+    this.stockCountBadgeEl = document.getElementById('stock-count-badge')!;
     this.wastePileEl = document.getElementById('pile-waste')!;
     this.foundationEls = [
       document.getElementById('foundation-0')!,
@@ -68,23 +75,33 @@ class SolitaireApp {
     this.movesEl = document.getElementById('stat-moves')!;
     this.autoFinishBtn = document.getElementById('btn-auto-finish')!;
     this.modalContainer = document.getElementById('modal-container')!;
+    this.playMenuModal = document.getElementById('modal-play-menu')!;
     this.winModal = document.getElementById('modal-victory')!;
     this.settingsModal = document.getElementById('modal-settings')!;
     this.statsModal = document.getElementById('modal-stats')!;
     this.authModal = document.getElementById('modal-auth')!;
     this.importModal = document.getElementById('modal-import')!;
     this.calendarModal = document.getElementById('modal-calendar')!;
+    this.puzzlesModal = document.getElementById('modal-puzzles')!;
 
     this.initEventListeners();
     this.initSavedPreferences();
     this.initTimer();
     this.initPWA();
+    this.updateHudRankBadge();
 
     // Subscribe to engine state
     this.engine.subscribe((state) => this.render(state));
 
-    // Subscribe to auth state
-    this.auth.subscribe((user) => this.renderAuth(user));
+    // Subscribe to auth state & sync cloud stats
+    this.auth.subscribe((user) => {
+      this.renderAuth(user);
+      if (user) {
+        this.statsManager.syncWithCloud(user).then(() => {
+          this.updateHudRankBadge();
+        });
+      }
+    });
 
     window.addEventListener('resize', () => {
       this.animator.resize();
@@ -92,31 +109,77 @@ class SolitaireApp {
     });
   }
 
+  private get allModals(): HTMLElement[] {
+    return [
+      this.playMenuModal,
+      this.winModal,
+      this.settingsModal,
+      this.statsModal,
+      this.authModal,
+      this.importModal,
+      this.calendarModal,
+      this.puzzlesModal
+    ];
+  }
+
   private initEventListeners(): void {
     // Stock draw
     this.stockPileEl.addEventListener('click', () => {
+      const wasEmpty = this.engine.state.stock.length === 0;
       if (this.engine.drawCards()) {
-        this.sound.playCardFlip();
+        if (wasEmpty) {
+          this.sound.playStockRecycle();
+        } else {
+          this.sound.playCardFlip();
+        }
+      } else {
+        this.sound.playInvalid();
       }
     });
 
-    // Toolbar buttons
+    // Bottom Toolbar: Themes & Play Menu
+    document.getElementById('btn-open-themes')?.addEventListener('click', () => {
+      this.openModal(this.settingsModal);
+    });
+
     document.getElementById('btn-new-game')?.addEventListener('click', () => {
-      if (this.engine.state.isStarted && !this.engine.state.isWon && this.engine.state.moves > 2) {
-        if (!confirm('Start a new game hand? Current progress will count as an unfinished hand.')) {
-          return;
-        }
-        this.statsManager.recordGame(false, this.engine.state.score, this.engine.state.elapsedTime, this.auth.getCurrentUser());
-      }
+      this.openModal(this.playMenuModal);
+    });
+
+    // MobilityWare Play Menu Options
+    document.getElementById('btn-deal-winning')?.addEventListener('click', () => {
+      this.recordUnfinishedIfStarted();
+      this.closeModals();
       this.animator.stop();
       document.getElementById('daily-banner')?.classList.add('hidden');
-      this.engine.createNewGame(this.engine.state.drawMode, false);
-      this.sound.playCardFlip();
+      this.engine.createNewGame(this.engine.state.drawMode, false, undefined, true, this.engine.state.scoringMode);
+      this.sound.playDealRiffle();
+    });
+
+    document.getElementById('btn-deal-random')?.addEventListener('click', () => {
+      this.recordUnfinishedIfStarted();
+      this.closeModals();
+      this.animator.stop();
+      document.getElementById('daily-banner')?.classList.add('hidden');
+      this.engine.createNewGame(this.engine.state.drawMode, false, undefined, false, this.engine.state.scoringMode);
+      this.sound.playDealRiffle();
+    });
+
+    document.getElementById('btn-deal-replay')?.addEventListener('click', () => {
+      this.closeModals();
+      this.animator.stop();
+      this.engine.restartCurrentDeal();
+      this.sound.playDealRiffle();
+    });
+
+    document.getElementById('btn-deal-daily')?.addEventListener('click', () => {
+      this.recordUnfinishedIfStarted();
+      this.startDailyChallenge(formatDate());
     });
 
     document.getElementById('btn-undo')?.addEventListener('click', () => {
       if (this.engine.undo()) {
-        this.sound.playCardPlace();
+        this.sound.playCardFlip();
       } else {
         this.sound.playInvalid();
       }
@@ -129,7 +192,10 @@ class SolitaireApp {
         this.highlightHint(hint);
       } else {
         this.sound.playInvalid();
-        alert('No obvious moves available. Try drawing cards from the stock pile!');
+        if (this.engine.state.stock.length > 0 || this.engine.state.waste.length > 0) {
+          this.stockPileEl.classList.add('hint-glow');
+          setTimeout(() => this.stockPileEl.classList.remove('hint-glow'), 1200);
+        }
       }
     });
 
@@ -144,7 +210,8 @@ class SolitaireApp {
       if (this.engine.state.isDailyChallenge) {
         document.getElementById('daily-banner')?.classList.add('hidden');
       }
-      this.engine.createNewGame(this.engine.state.drawMode, false);
+      this.engine.createNewGame(this.engine.state.drawMode, false, undefined, true, this.engine.state.scoringMode);
+      this.sound.playDealRiffle();
     });
 
     // Header buttons (Modals)
@@ -153,11 +220,41 @@ class SolitaireApp {
       this.renderStatsModal();
       this.openModal(this.statsModal);
     });
+    document.getElementById('btn-rank-badge')?.addEventListener('click', () => {
+      this.renderStatsModal();
+      this.openModal(this.statsModal);
+    });
     document.getElementById('btn-daily')?.addEventListener('click', () => {
       this.renderCalendarModal();
       this.openModal(this.calendarModal);
     });
+    document.getElementById('btn-puzzles')?.addEventListener('click', () => {
+      this.renderPuzzlesModal();
+      this.openModal(this.puzzlesModal);
+    });
     document.getElementById('btn-auth')?.addEventListener('click', () => this.openModal(this.authModal));
+
+    // Puzzle Bonus Piece Claim
+    document.getElementById('btn-claim-free-piece')?.addEventListener('click', () => {
+      const res = this.statsManager.unlockNextPuzzlePiece(this.activePuzzleId, this.auth.getCurrentUser());
+      if (res.unlockedIndex !== null) {
+        this.sound.playFoundationPlaced(10);
+        this.renderPuzzlesModal(res.unlockedIndex);
+        this.updateHudRankBadge();
+      } else {
+        this.sound.playWinFanfare();
+        // Switch to next incomplete puzzle if current is complete
+        const stats = this.statsManager.getStats();
+        const nextIncomplete = MOBILITYWARE_PUZZLES.find(
+          p => (stats.meta.puzzleProgress?.[p.id]?.length || 0) < 16
+        );
+        if (nextIncomplete) {
+          this.activePuzzleId = nextIncomplete.id;
+          const nextRes = this.statsManager.unlockNextPuzzlePiece(this.activePuzzleId, this.auth.getCurrentUser());
+          this.renderPuzzlesModal(nextRes.unlockedIndex ?? undefined);
+        }
+      }
+    });
 
     // Calendar navigation & actions
     document.getElementById('cal-prev-month')?.addEventListener('click', () => {
@@ -185,8 +282,8 @@ class SolitaireApp {
     document.getElementById('btn-exit-daily')?.addEventListener('click', () => {
       document.getElementById('daily-banner')?.classList.add('hidden');
       this.animator.stop();
-      this.engine.createNewGame(this.engine.state.drawMode, false);
-      this.sound.playCardFlip();
+      this.engine.createNewGame(this.engine.state.drawMode, false, undefined, true, this.engine.state.scoringMode);
+      this.sound.playDealRiffle();
     });
 
     // Modal close buttons
@@ -199,7 +296,7 @@ class SolitaireApp {
       }
     });
 
-    // Settings listeners
+    // Draw Mode (Turn 1 / Turn 3)
     document.querySelectorAll('[data-draw]').forEach((btn) => {
       btn.addEventListener('click', (e) => {
         document.querySelectorAll('[data-draw]').forEach(b => b.classList.remove('active'));
@@ -207,10 +304,24 @@ class SolitaireApp {
         target.classList.add('active');
         const drawMode = parseInt(target.dataset.draw || '1', 10) as DrawMode;
         this.engine.state.drawMode = drawMode;
+        localStorage.setItem('solitaire_draw_mode', String(drawMode));
       });
     });
 
-    // Handedness listeners (Left / Right ergonomic layout)
+    // Scoring Mode (Standard / Vegas)
+    document.querySelectorAll('[data-scoring]').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('[data-scoring]').forEach(b => b.classList.remove('active'));
+        const target = e.currentTarget as HTMLElement;
+        target.classList.add('active');
+        const scoringMode = (target.dataset.scoring || 'standard') as ScoringMode;
+        this.engine.state.scoringMode = scoringMode;
+        localStorage.setItem('solitaire_scoring_mode', scoringMode);
+        this.render(this.engine.state);
+      });
+    });
+
+    // Handedness (Left / Right)
     document.querySelectorAll('[data-hand]').forEach((btn) => {
       btn.addEventListener('click', (e) => {
         document.querySelectorAll('[data-hand]').forEach(b => b.classList.remove('active'));
@@ -222,7 +333,7 @@ class SolitaireApp {
       });
     });
 
-    // Deck Theme listeners (Classic / Modern / Midnight / Crown)
+    // Card Face Style (Classic / Modern / Midnight / Crown)
     document.querySelectorAll('[data-deck]').forEach((btn) => {
       btn.addEventListener('click', (e) => {
         document.querySelectorAll('[data-deck]').forEach(b => b.classList.remove('active'));
@@ -231,9 +342,31 @@ class SolitaireApp {
         const deck = target.dataset.deck || 'classic';
         document.body.classList.remove('deck-classic', 'deck-modern', 'deck-midnight', 'deck-crown', 'card-faces-classic', 'card-faces-modern');
         document.body.classList.add(`deck-${deck}`);
-        document.body.classList.add(`card-faces-${deck === 'modern' ? 'modern' : 'classic'}`);
         localStorage.setItem('solitaire_card_style', deck);
-        localStorage.setItem('solitaire_card_face', deck === 'modern' ? 'modern' : 'classic');
+      });
+    });
+
+    // Card Back Design (6 MobilityWare Backs)
+    document.querySelectorAll('[data-cardback]').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('[data-cardback]').forEach(b => b.classList.remove('active'));
+        const target = e.currentTarget as HTMLElement;
+        target.classList.add('active');
+        const cb = target.dataset.cardback || 'blue-lattice';
+        this.applyCardBack(cb);
+        localStorage.setItem('solitaire_card_back', cb);
+      });
+    });
+
+    // Table Background Swatches (8 MobilityWare Backgrounds)
+    document.querySelectorAll('[data-theme]').forEach((chip) => {
+      chip.addEventListener('click', (e) => {
+        document.querySelectorAll('[data-theme]').forEach(c => c.classList.remove('active'));
+        const target = e.currentTarget as HTMLElement;
+        target.classList.add('active');
+        const theme = target.dataset.theme || 'classic';
+        this.applyTableTheme(theme);
+        localStorage.setItem('solitaire_theme', theme);
       });
     });
 
@@ -251,45 +384,34 @@ class SolitaireApp {
       });
     }
 
-    // Theme pickers (Felt color)
-    document.querySelectorAll('.theme-chip').forEach((chip) => {
-      chip.addEventListener('click', (e) => {
-        document.querySelectorAll('.theme-chip').forEach(c => c.classList.remove('active'));
-        const target = e.currentTarget as HTMLElement;
-        target.classList.add('active');
-        const theme = target.dataset.theme || 'classic';
-        document.body.classList.remove('theme-classic', 'theme-royal', 'theme-crimson', 'theme-midnight');
-        document.body.classList.add(`theme-${theme}`);
-        localStorage.setItem('solitaire_theme', theme);
-      });
-    });
-
     // OAuth & Profile buttons
     document.getElementById('btn-google-login')?.addEventListener('click', async () => {
       try {
         await this.auth.signInGoogle();
+        this.sound.playWinFanfare();
       } catch (err) {
-        alert('Google Sign-In: ' + (err as Error).message);
+        if ((err as Error).message !== 'POPUP_CLOSED') {
+          // Fallback to quick Google input in modal
+          const emailInput = document.getElementById('input-google-email') as HTMLInputElement;
+          emailInput?.focus();
+        }
       }
     });
 
     document.getElementById('btn-github-login')?.addEventListener('click', async () => {
       try {
         await this.auth.signInGitHub();
+        this.sound.playWinFanfare();
       } catch (err) {
-        if ((err as Error).message === 'CONFIG_NEEDED') {
-          const fields = document.getElementById('oauth-setup-fields');
-          fields?.classList.remove('hidden');
-          fields?.scrollIntoView({ behavior: 'smooth' });
-          document.getElementById('setup-client-id')?.focus();
-        } else {
-          alert('GitHub Sign-In: ' + (err as Error).message);
+        if ((err as Error).message !== 'POPUP_CLOSED') {
+          const ghInput = document.getElementById('input-github-username') as HTMLInputElement;
+          ghInput?.focus();
         }
       }
     });
 
-    // Quick GitHub username profile
-    document.getElementById('btn-save-username')?.addEventListener('click', () => {
+    // Quick GitHub username sign-in
+    document.getElementById('btn-save-username')?.addEventListener('click', async () => {
       const input = document.getElementById('input-github-username') as HTMLInputElement;
       const username = input?.value.trim();
       if (!username) {
@@ -297,11 +419,37 @@ class SolitaireApp {
         return;
       }
       try {
-        this.auth.signInWithUsername(username);
+        await this.auth.signInWithUsername(username);
         this.sound.playWinFanfare();
       } catch (err) {
         alert((err as Error).message);
       }
+    });
+
+    // Quick Google email sign-in
+    document.getElementById('btn-save-google')?.addEventListener('click', async () => {
+      const input = document.getElementById('input-google-email') as HTMLInputElement;
+      const email = input?.value.trim();
+      if (!email) {
+        alert('Please enter your Google email.');
+        return;
+      }
+      try {
+        await this.auth.signInWithGoogleProfile(email);
+        this.sound.playWinFanfare();
+      } catch (err) {
+        alert((err as Error).message);
+      }
+    });
+
+    // Manual Cloud Sync button
+    document.getElementById('btn-sync-now')?.addEventListener('click', async () => {
+      const statusText = document.getElementById('sync-status-text');
+      if (statusText) statusText.textContent = 'Syncing with cloud server...';
+      await this.statsManager.syncWithCloud(this.auth.getCurrentUser());
+      this.updateHudRankBadge();
+      this.sound.playFoundationPlaced(8);
+      if (statusText) statusText.textContent = '✓ Cloud stats synchronized just now';
     });
 
     // Toggle OAuth setup fields
@@ -311,33 +459,40 @@ class SolitaireApp {
 
     // Save OAuth credentials to .env
     document.getElementById('btn-save-oauth-config')?.addEventListener('click', async () => {
-      const clientIdInput = document.getElementById('setup-client-id') as HTMLInputElement;
-      const secretInput = document.getElementById('setup-client-secret') as HTMLInputElement;
+      const clientId = (document.getElementById('setup-client-id') as HTMLInputElement)?.value.trim();
+      const secret = (document.getElementById('setup-client-secret') as HTMLInputElement)?.value.trim();
+      const googleClientId = (document.getElementById('setup-google-client-id') as HTMLInputElement)?.value.trim();
+      const googleSecret = (document.getElementById('setup-google-client-secret') as HTMLInputElement)?.value.trim();
       const feedback = document.getElementById('setup-save-feedback');
 
-      const clientId = clientIdInput?.value.trim();
-      const secret = secretInput?.value.trim();
-
-      if (!clientId || !secret) {
-        alert('Please enter both GitHub Client ID and Client Secret.');
+      if ((!clientId || !secret) && (!googleClientId || !googleSecret)) {
+        alert('Please enter GitHub or Google Client ID and Client Secret.');
         return;
       }
 
-      const success = await this.auth.saveBackendCredentials(clientId, secret);
+      const success = await this.auth.saveBackendCredentials({
+        githubClientId: clientId,
+        githubClientSecret: secret,
+        googleClientId,
+        googleClientSecret: googleSecret
+      });
       if (success) {
         feedback?.classList.remove('hidden');
         setTimeout(() => feedback?.classList.add('hidden'), 3500);
-        alert('GitHub OAuth credentials saved to .env! You can now click "Continue with GitHub".');
       } else {
         alert('Failed to save credentials.');
       }
     });
 
-    // Fetch and populate backend OAuth callback URL
+    // Fetch and populate backend OAuth callback URLs
     this.auth.getBackendStatus().then(status => {
       const urlEl = document.getElementById('setup-callback-url');
       if (urlEl && status.callbackUrl) {
         urlEl.textContent = status.callbackUrl;
+      }
+      const gUrlEl = document.getElementById('setup-google-callback-url');
+      if (gUrlEl && status.googleCallbackUrl) {
+        gUrlEl.textContent = status.googleCallbackUrl;
       }
     });
 
@@ -355,6 +510,45 @@ class SolitaireApp {
     });
 
     this.initImportListeners();
+  }
+
+  private recordUnfinishedIfStarted(): void {
+    if (this.engine.state.isStarted && !this.engine.state.isWon && this.engine.state.moves > 2) {
+      this.statsManager.recordGame(
+        false,
+        this.engine.state.score,
+        this.engine.state.elapsedTime,
+        this.auth.getCurrentUser()
+      );
+    }
+  }
+
+  private applyTableTheme(theme: string): void {
+    const allThemes = [
+      'theme-classic', 'theme-royal', 'theme-crimson', 'theme-midnight',
+      'theme-wood', 'theme-ocean', 'theme-starlight', 'theme-amethyst'
+    ];
+    document.body.classList.remove(...allThemes);
+    document.body.classList.add(`theme-${theme}`);
+  }
+
+  private applyCardBack(cardBack: string): void {
+    const allBacks = [
+      'back-blue-lattice', 'back-red-lattice', 'back-gold-crown',
+      'back-ocean-wave', 'back-emerald-crest', 'back-galaxy-night'
+    ];
+    document.body.classList.remove(...allBacks);
+    document.body.classList.add(`back-${cardBack}`);
+  }
+
+  private updateHudRankBadge(): void {
+    const stats = this.statsManager.getStats();
+    const level = stats.meta?.level || 75;
+    const rank = getPlayerRank(level);
+    const iconEl = document.getElementById('hud-rank-icon');
+    const textEl = document.getElementById('hud-level-text');
+    if (iconEl) iconEl.textContent = rank.badge;
+    if (textEl) textEl.textContent = `Lv.${level}`;
   }
 
   private initImportListeners(): void {
@@ -416,9 +610,9 @@ class SolitaireApp {
     if (btnConfirmImport) {
       btnConfirmImport.addEventListener('click', () => {
         if (!this.pendingImportStats) return;
-        this.statsManager.importStats(this.pendingImportStats);
+        this.statsManager.importStats(this.pendingImportStats, false, this.auth.getCurrentUser());
         this.sound.playWinFanfare();
-        alert('MobilityWare stats successfully imported!');
+        this.updateHudRankBadge();
         this.renderStatsModal();
         this.openModal(this.statsModal);
       });
@@ -504,15 +698,35 @@ class SolitaireApp {
   }
 
   private render(state: GameState): void {
-    // Score & Moves
-    this.scoreEl.textContent = state.score.toString();
+    // Score & Moves (format Vegas with $ sign)
+    if (state.scoringMode === 'vegas') {
+      this.scoreEl.textContent = state.score < 0 ? `-$${Math.abs(state.score)}` : `$${state.score}`;
+    } else {
+      this.scoreEl.textContent = state.score.toString();
+    }
     this.movesEl.textContent = state.moves.toString();
     this.updateTimeDisplay();
 
-    // 1. Stock Pile
+    // Check if there is a fresh animation action to play
+    const action = state.lastAction;
+    const shouldAnimate = Boolean(action && action.timestamp !== this.lastAnimatedTimestamp);
+    if (action && shouldAnimate) {
+      this.lastAnimatedTimestamp = action.timestamp;
+    }
+
+    const flippedSet = new Set(shouldAnimate && action ? action.flippedCardIds : []);
+    const movedSet = new Set(shouldAnimate && action ? action.movedCardIds : []);
+    const isDealAction = Boolean(shouldAnimate && action?.type === 'deal');
+
+    // 1. Stock Pile & Remaining Card Badge
     const stockPlaceholder = this.stockPileEl.querySelector('.card-placeholder') as HTMLElement;
     const existingStockCards = this.stockPileEl.querySelectorAll('.card');
     existingStockCards.forEach(c => c.remove());
+
+    if (this.stockCountBadgeEl) {
+      this.stockCountBadgeEl.textContent = state.stock.length.toString();
+      this.stockCountBadgeEl.classList.toggle('hidden', state.stock.length === 0);
+    }
 
     if (state.stock.length > 0) {
       stockPlaceholder.classList.add('hidden');
@@ -530,14 +744,16 @@ class SolitaireApp {
 
     if (state.waste.length > 0) {
       wastePlaceholder.classList.add('hidden');
-      // Show top card (or top 3 if Draw 3)
       const visibleCount = state.drawMode === 3 ? Math.min(3, state.waste.length) : 1;
       const startIndex = state.waste.length - visibleCount;
 
       for (let i = startIndex; i < state.waste.length; i++) {
         const card = state.waste[i];
         const isTop = i === state.waste.length - 1;
-        const cardEl = CardRenderer.createCardElement(card);
+        const isNewlyDrawn = flippedSet.has(card.id);
+        const cardEl = CardRenderer.createCardElement(card, false, {
+          isFlipping: isNewlyDrawn
+        });
         const offset = (i - startIndex) * (window.innerWidth < 640 ? 12 : 16);
         cardEl.style.transform = `translateX(${offset}px)`;
 
@@ -561,7 +777,10 @@ class SolitaireApp {
       if (pile.length > 0) {
         placeholder.classList.add('hidden');
         const topCard = pile[pile.length - 1];
-        const cardEl = CardRenderer.createCardElement(topCard);
+        const isMovedHere = movedSet.has(topCard.id) && action?.targetPile?.type === 'foundation' && action.targetPile.index === f;
+        const cardEl = CardRenderer.createCardElement(topCard, false, {
+          isMoving: isMovedHere
+        });
         this.dragDrop.registerCard(cardEl, topCard, { type: 'foundation', index: f });
         fEl.appendChild(cardEl);
       } else {
@@ -572,7 +791,7 @@ class SolitaireApp {
     // 4. Tableau Columns
     const isMobile = window.innerWidth < 640;
     const downOffset = isMobile ? 12 : 16;
-    const upOffset = isMobile ? 22 : 28;
+    const upOffset = isMobile ? 24 : 30;
 
     for (let colIdx = 0; colIdx < 7; colIdx++) {
       const colEl = this.tableauEls[colIdx];
@@ -580,8 +799,15 @@ class SolitaireApp {
       const cards = state.tableau[colIdx];
       let currentTop = 0;
 
-      cards.forEach((card) => {
-        const cardEl = CardRenderer.createCardElement(card);
+      cards.forEach((card, rowIdx) => {
+        const isFlippedNow = flippedSet.has(card.id);
+        const isMovedNow = movedSet.has(card.id);
+        const cardEl = CardRenderer.createCardElement(card, false, {
+          isFlipping: isFlippedNow,
+          isDealing: isDealAction,
+          dealDelayMs: isDealAction ? (colIdx * 45 + rowIdx * 20) : 0,
+          isMoving: isMovedNow && !isFlippedNow
+        });
         cardEl.style.top = `${currentTop}px`;
 
         if (card.faceUp) {
@@ -617,8 +843,8 @@ class SolitaireApp {
     if (hint.to.type === 'foundation') toEl = this.foundationEls[hint.to.index];
     if (hint.to.type === 'tableau') toEl = this.tableauEls[hint.to.index];
 
-    if (fromEl) fromEl.style.filter = 'drop-shadow(0 0 10px #f59e0b) brightness(1.2)';
-    if (toEl) toEl.style.filter = 'drop-shadow(0 0 10px #10b981) brightness(1.2)';
+    if (fromEl) fromEl.style.filter = 'drop-shadow(0 0 12px #f59e0b) brightness(1.2)';
+    if (toEl) toEl.style.filter = 'drop-shadow(0 0 12px #10b981) brightness(1.2)';
 
     setTimeout(() => {
       if (fromEl) fromEl.style.filter = '';
@@ -631,33 +857,54 @@ class SolitaireApp {
     this.autoFinishInterval = window.setInterval(() => {
       const moved = this.engine.autoFinishStep();
       if (moved) {
-        this.sound.playCardPlace();
+        const last = this.engine.state.history[this.engine.state.history.length - 1];
+        const rank = last?.cards[0]?.rank || 5;
+        this.sound.playFoundationPlaced(rank);
       } else {
         if (this.autoFinishInterval) {
           clearInterval(this.autoFinishInterval);
           this.autoFinishInterval = null;
         }
       }
-    }, 120);
+    }, 95);
   }
 
   private handleGameWon(): void {
-    if (this.winModal.classList.contains('hidden') === false) return; // already showing
+    if (this.winModal.classList.contains('hidden') === false) return;
 
     this.sound.playWinFanfare();
     const foundationRects = this.foundationEls.map(el => el.getBoundingClientRect());
     this.animator.startCascade(this.engine.state.foundations, foundationRects);
 
-    // Record stats including daily challenge date
     const dailyDate = this.engine.state.isDailyChallenge ? this.engine.state.dailyDate : undefined;
-    this.statsManager.recordGame(true, this.engine.state.score, this.engine.state.elapsedTime, this.auth.getCurrentUser(), dailyDate);
+    const reward = this.statsManager.recordGame(
+      true,
+      this.engine.state.score,
+      this.engine.state.elapsedTime,
+      this.auth.getCurrentUser(),
+      dailyDate
+    );
+    this.updateHudRankBadge();
 
-    // Update win modal
     const mins = Math.floor(this.engine.state.elapsedTime / 60);
     const secs = this.engine.state.elapsedTime % 60;
     document.getElementById('v-time')!.textContent = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
     document.getElementById('v-score')!.textContent = this.engine.state.score.toString();
     document.getElementById('v-moves')!.textContent = this.engine.state.moves.toString();
+
+    const xpEl = document.getElementById('v-xp-earned');
+    if (xpEl) {
+      xpEl.textContent = reward.leveledUp
+        ? `🎉 LEVEL UP! Lv.${reward.stats.meta.level} (+${reward.xpEarned} ★)`
+        : `+${reward.xpEarned} ★ XP Earned`;
+    }
+
+    const puzEl = document.getElementById('v-puzzle-reward');
+    if (puzEl) {
+      puzEl.textContent = reward.unlockedPiece !== null
+        ? `🧩 Puzzle Piece #${reward.unlockedPiece + 1} Unlocked!`
+        : `🏅 All Puzzle Pieces Collected!`;
+    }
 
     const winSub = this.winModal.querySelector('.victory-sub') as HTMLElement;
     if (winSub) {
@@ -675,20 +922,20 @@ class SolitaireApp {
 
   private openModal(modal: HTMLElement): void {
     this.modalContainer.classList.remove('hidden');
-    [this.winModal, this.settingsModal, this.statsModal, this.authModal, this.importModal, this.calendarModal].forEach(m => m.classList.add('hidden'));
+    this.allModals.forEach(m => m.classList.add('hidden'));
     modal.classList.remove('hidden');
   }
 
   private closeModals(): void {
     this.modalContainer.classList.add('hidden');
-    [this.winModal, this.settingsModal, this.statsModal, this.authModal, this.importModal, this.calendarModal].forEach(m => m.classList.add('hidden'));
+    this.allModals.forEach(m => m.classList.add('hidden'));
   }
 
   private startDailyChallenge(dateStr: string): void {
     this.closeModals();
     this.animator.stop();
-    this.engine.createNewGame(this.engine.state.drawMode, true, dateStr);
-    this.sound.playCardFlip();
+    this.engine.createNewGame(this.engine.state.drawMode, true, dateStr, true, this.engine.state.scoringMode);
+    this.sound.playDealRiffle();
 
     const banner = document.getElementById('daily-banner')!;
     const bannerDate = document.getElementById('daily-banner-date')!;
@@ -703,15 +950,6 @@ class SolitaireApp {
   private renderCalendarModal(): void {
     const stats = this.statsManager.getStats();
     const crownsData = stats.crowns || {};
-    const meta = stats.meta || {
-      level: 75,
-      totalStars: 62300,
-      starsToNextLevel: 890,
-      currentPuzzle: 'autumn_cabin',
-      piecesCollected: 226,
-      puzzlesCompleted: 12,
-      badgesEarned: 6
-    };
 
     const monthNames = [
       'JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE',
@@ -725,32 +963,34 @@ class SolitaireApp {
     const crownCount = monthCrowns.daysCompleted.length;
     document.getElementById('cal-crown-count')!.textContent = crownCount.toString();
 
-    // Trophy calculation & banner display
+    const fillEl = document.getElementById('cal-trophy-fill');
+    if (fillEl) {
+      fillEl.style.width = `${Math.min(100, Math.round((crownCount / 20) * 100))}%`;
+    }
+
     let trophyTitle = 'CURRENT TROPHY: NONE';
     let trophyIcon = '🏆';
     if (crownCount >= 20 || monthCrowns.trophyUnlocked === 'GOLD') {
-      trophyTitle = 'CURRENT TROPHY: [★ GOLD TROPHY UNLOCKED ★]';
+      trophyTitle = 'CURRENT TROPHY: ★ GOLD TROPHY UNLOCKED ★';
       trophyIcon = '🥇';
     } else if (crownCount >= 10 || monthCrowns.trophyUnlocked === 'SILVER') {
-      trophyTitle = 'CURRENT TROPHY: [★ SILVER TROPHY UNLOCKED ★]';
+      trophyTitle = 'CURRENT TROPHY: ★ SILVER TROPHY UNLOCKED ★';
       trophyIcon = '🥈';
     } else if (crownCount >= 5 || monthCrowns.trophyUnlocked === 'BRONZE') {
-      trophyTitle = 'CURRENT TROPHY: [★ BRONZE TROPHY UNLOCKED ★]';
+      trophyTitle = 'CURRENT TROPHY: ★ BRONZE TROPHY UNLOCKED ★';
       trophyIcon = '🥉';
     } else {
-      trophyTitle = `CURRENT TROPHY: PROGRESS (${crownCount}/5 FOR BRONZE)`;
+      trophyTitle = `CURRENT TROPHY: ${crownCount}/5 CROWNS FOR BRONZE`;
     }
     document.getElementById('cal-trophy-title')!.textContent = trophyTitle;
     document.getElementById('cal-trophy-icon')!.textContent = trophyIcon;
 
-    // Calendar grid
     const calGrid = document.getElementById('cal-grid')!;
     calGrid.innerHTML = '';
 
-    const firstDayOfWeek = new Date(this.calYear, this.calMonth, 1).getDay(); // 0 = Sun
+    const firstDayOfWeek = new Date(this.calYear, this.calMonth, 1).getDay();
     const daysInMonth = new Date(this.calYear, this.calMonth + 1, 0).getDate();
 
-    // Empty offset cells
     for (let i = 0; i < firstDayOfWeek; i++) {
       const emptyCell = document.createElement('div');
       emptyCell.className = 'cal-day empty';
@@ -793,32 +1033,120 @@ class SolitaireApp {
         this.selectedDate = dateStr;
         document.querySelectorAll('.cal-day').forEach(d => d.classList.remove('selected'));
         dayCell.classList.add('selected');
-        document.getElementById('btn-play-daily-text')!.textContent = `Play Hand (${dateStr})`;
+        document.getElementById('btn-play-daily-text')!.textContent = `Play Challenge (${dateStr})`;
       });
 
       calGrid.appendChild(dayCell);
     }
 
-    // Meta Progression
-    document.getElementById('meta-level')!.textContent = meta.level.toString();
-    document.getElementById('meta-stars')!.textContent = `${meta.totalStars.toLocaleString()} ★`;
-    document.getElementById('meta-stars-next')!.textContent = `${meta.starsToNextLevel} ★`;
-    document.getElementById('meta-jigsaw-name')!.textContent = meta.currentPuzzle.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
-    document.getElementById('meta-jigsaw-pieces')!.textContent = meta.piecesCollected.toString();
-    document.getElementById('meta-jigsaw-puzzles')!.textContent = meta.puzzlesCompleted.toString();
-    document.getElementById('meta-jigsaw-badges')!.textContent = `${meta.badgesEarned} Badges`;
+    document.getElementById('btn-play-daily-text')!.textContent = `Play Challenge (${this.selectedDate})`;
+  }
 
-    document.getElementById('btn-play-daily-text')!.textContent = `Play Hand (${this.selectedDate})`;
+  /**
+   * Renders the MobilityWare Jigsaw Puzzle Events Gallery & Interactive 4x4 Board
+   */
+  private renderPuzzlesModal(newlyUnlockedIndex?: number): void {
+    const stats = this.statsManager.getStats();
+    const meta = stats.meta;
+
+    document.getElementById('puz-total-pieces')!.textContent = meta.piecesCollected.toString();
+    document.getElementById('puz-total-solved')!.textContent = meta.puzzlesCompleted.toString();
+    document.getElementById('puz-total-badges')!.textContent = `${meta.badgesEarned} 🏅`;
+
+    // Render Puzzle Selector Tabs
+    const selectorEl = document.getElementById('puzzle-selector')!;
+    selectorEl.innerHTML = '';
+
+    MOBILITYWARE_PUZZLES.forEach((puz) => {
+      const unlockedArr = meta.puzzleProgress?.[puz.id] || [];
+      const isComplete = unlockedArr.length >= 16;
+      const btn = document.createElement('button');
+      btn.className = `puzzle-tab-btn ${puz.id === this.activePuzzleId ? 'active' : ''} ${isComplete ? 'completed' : ''}`;
+      btn.innerHTML = `
+        <span class="puz-tab-icon">${puz.icon}</span>
+        <span class="puz-tab-name">${puz.name}</span>
+        <span class="puz-tab-count">${unlockedArr.length}/16</span>
+      `;
+      btn.addEventListener('click', () => {
+        this.activePuzzleId = puz.id;
+        this.sound.playCardPlace();
+        this.renderPuzzlesModal();
+      });
+      selectorEl.appendChild(btn);
+    });
+
+    const activeDef = MOBILITYWARE_PUZZLES.find(p => p.id === this.activePuzzleId) || MOBILITYWARE_PUZZLES[0];
+    const unlockedPieces = meta.puzzleProgress?.[activeDef.id] || [];
+
+    document.getElementById('jigsaw-active-title')!.textContent = `${activeDef.icon} ${activeDef.name} (${activeDef.theme})`;
+    document.getElementById('jigsaw-active-progress')!.textContent = unlockedPieces.length >= 16
+      ? `${activeDef.badgeEmoji} COMPLETED!`
+      : `${unlockedPieces.length} / 16 Pieces`;
+
+    const boardEl = document.getElementById('jigsaw-board')!;
+    boardEl.innerHTML = '';
+    boardEl.style.background = `linear-gradient(135deg, ${activeDef.colors[0]} 0%, ${activeDef.colors[1]} 60%, ${activeDef.colors[2]} 100%)`;
+
+    for (let idx = 0; idx < 16; idx++) {
+      const isUnlocked = unlockedPieces.includes(idx);
+      const isNew = idx === newlyUnlockedIndex;
+      const cell = document.createElement('div');
+      cell.className = `jigsaw-cell ${isUnlocked ? 'unlocked' : 'locked'} ${isNew ? 'just-unlocked' : ''}`;
+
+      const row = Math.floor(idx / 4);
+      const col = idx % 4;
+
+      if (isUnlocked) {
+        // Show scenic SVG mosaic tile with central emblem on center pieces
+        let centerDecor = '';
+        if (row === 1 && col === 1) centerDecor = `<span class="jigsaw-art-emblem">${activeDef.icon}</span>`;
+        if (row === 2 && col === 2) centerDecor = `<span class="jigsaw-art-emblem">${activeDef.badgeEmoji}</span>`;
+        cell.innerHTML = `
+          ${centerDecor}
+          <span class="jigsaw-piece-num">#${idx + 1}</span>
+        `;
+      } else {
+        cell.innerHTML = `
+          <span class="jigsaw-lock-icon">🧩</span>
+          <span class="jigsaw-piece-num">#${idx + 1}</span>
+        `;
+        cell.addEventListener('click', () => {
+          const res = this.statsManager.unlockNextPuzzlePiece(activeDef.id, this.auth.getCurrentUser());
+          if (res.unlockedIndex !== null) {
+            this.sound.playFoundationPlaced(11);
+            this.renderPuzzlesModal(res.unlockedIndex);
+          }
+        });
+      }
+
+      boardEl.appendChild(cell);
+    }
   }
 
   private renderStatsModal(): void {
     const s = this.statsManager.getStats();
+    const level = s.meta?.level || 75;
+    const rank = getPlayerRank(level);
+
+    // Rank & XP progression header
+    document.getElementById('stats-rank-icon')!.textContent = rank.badge;
+    document.getElementById('stats-rank-title')!.textContent = rank.title.toUpperCase();
+    document.getElementById('stats-level-num')!.textContent = level.toString();
+    document.getElementById('stats-total-stars')!.textContent = `${(s.meta?.totalStars || 0).toLocaleString()} ★`;
+
+    const nextStars = s.meta?.starsToNextLevel || 890;
+    const pct = Math.max(8, Math.min(96, Math.round(((1000 - (nextStars % 1000)) / 1000) * 100)));
+    const xpFill = document.getElementById('stats-xp-fill');
+    if (xpFill) xpFill.style.width = `${pct}%`;
+    document.getElementById('stats-xp-next')!.textContent = `${nextStars} ★ to Level ${level + 1}`;
+
+    // Core stats boxes
     document.getElementById('stats-played')!.textContent = s.gamesPlayed.toString();
     document.getElementById('stats-won')!.textContent = s.gamesWon.toString();
     const rate = s.gamesPlayed > 0 ? Math.round((s.gamesWon / s.gamesPlayed) * 100) : 0;
     document.getElementById('stats-win-rate')!.textContent = `${rate}%`;
-    document.getElementById('stats-streak')!.textContent = s.currentStreak.toString();
-    document.getElementById('stats-best-score')!.textContent = s.bestScore.toString();
+    document.getElementById('stats-streak')!.textContent = `${s.currentStreak} (Best: ${s.bestStreak})`;
+    document.getElementById('stats-best-score')!.textContent = s.bestScore.toLocaleString();
     if (s.bestTime !== null) {
       const mins = Math.floor(s.bestTime / 60);
       const secs = s.bestTime % 60;
@@ -826,6 +1154,39 @@ class SolitaireApp {
     } else {
       document.getElementById('stats-best-time')!.textContent = '--:--';
     }
+
+    // MobilityWare Leaderboard
+    const user = this.auth.getCurrentUser();
+    const playerName = user?.displayName || 'You (Evan)';
+    const entries = [
+      { name: 'KlondikeKing99', level: 112, badge: '👑', score: 16420, time: '00:44', isUser: false },
+      { name: 'VegasQueen_MW', level: 94, badge: '💎', score: 14890, time: '00:48', isUser: false },
+      {
+        name: playerName,
+        level,
+        badge: rank.badge,
+        score: s.bestScore,
+        time: s.bestTime ? `${String(Math.floor(s.bestTime / 60)).padStart(2, '0')}:${String(s.bestTime % 60).padStart(2, '0')}` : '00:52',
+        isUser: true
+      },
+      { name: 'CardShark_TX', level: 68, badge: '♠️', score: 12350, time: '01:02', isUser: false },
+      { name: 'SolitaireAce', level: 51, badge: '♥️', score: 10940, time: '01:15', isUser: false }
+    ].sort((a, b) => b.score - a.score);
+
+    const lbList = document.getElementById('leaderboard-list')!;
+    lbList.innerHTML = entries
+      .map((entry, idx) => `
+        <div class="lb-row ${entry.isUser ? 'lb-row-user' : ''}">
+          <span class="lb-rank">#${idx + 1}</span>
+          <span class="lb-badge">${entry.badge}</span>
+          <div class="lb-info">
+            <span class="lb-name">${entry.name}</span>
+            <span class="lb-sub">Lv.${entry.level} &bull; Fastest ${entry.time}</span>
+          </div>
+          <span class="lb-score">${entry.score.toLocaleString()}</span>
+        </div>
+      `)
+      .join('');
   }
 
   private renderAuth(user: ReturnType<typeof this.auth.getCurrentUser>): void {
@@ -844,7 +1205,7 @@ class SolitaireApp {
 
       document.getElementById('user-name')!.textContent = user.displayName || 'Player';
       document.getElementById('user-email')!.textContent = user.email || '';
-      document.getElementById('user-provider')!.textContent = user.provider.toUpperCase();
+      document.getElementById('user-provider')!.textContent = `${user.provider.toUpperCase()} VERIFIED`;
       const userImg = document.getElementById('user-avatar') as HTMLImageElement;
       if (user.photoURL) userImg.src = user.photoURL;
     } else {
@@ -856,16 +1217,14 @@ class SolitaireApp {
   }
 
   private initSavedPreferences(): void {
-    // 0. Board Theme (Felt color)
+    // 0. Table Background Theme
     const savedTheme = localStorage.getItem('solitaire_theme') || 'classic';
-    document.body.classList.remove('theme-classic', 'theme-royal', 'theme-crimson', 'theme-midnight');
-    document.body.classList.add(`theme-${savedTheme}`);
-    document.querySelectorAll('.theme-chip').forEach(c => {
-      if ((c as HTMLElement).dataset.theme === savedTheme) c.classList.add('active');
-      else c.classList.remove('active');
+    this.applyTableTheme(savedTheme);
+    document.querySelectorAll('[data-theme]').forEach(c => {
+      c.classList.toggle('active', (c as HTMLElement).dataset.theme === savedTheme);
     });
 
-    // 1. Handedness (Left/Right ergonomics)
+    // 1. Handedness
     const savedHand = localStorage.getItem('solitaire_handedness') || 'right';
     if (savedHand === 'left') {
       document.body.classList.add('left-handed');
@@ -873,14 +1232,32 @@ class SolitaireApp {
       document.getElementById('btn-hand-left')?.classList.add('active');
     }
 
-    // 2. Deck Theme (Classic / Modern / Midnight / Crown)
-    const savedDeck = localStorage.getItem('solitaire_card_style') || localStorage.getItem('solitaire_card_face') || 'classic';
-    document.body.classList.remove('deck-classic', 'deck-modern', 'deck-midnight', 'deck-crown', 'card-faces-classic', 'card-faces-modern');
+    // 2. Deck Face Theme
+    const savedDeck = localStorage.getItem('solitaire_card_style') || 'classic';
+    document.body.classList.remove('deck-classic', 'deck-modern', 'deck-midnight', 'deck-crown');
     document.body.classList.add(`deck-${savedDeck}`);
-    document.body.classList.add(`card-faces-${savedDeck === 'modern' ? 'modern' : 'classic'}`);
     document.querySelectorAll('[data-deck]').forEach(b => {
-      if ((b as HTMLElement).dataset.deck === savedDeck) b.classList.add('active');
-      else b.classList.remove('active');
+      b.classList.toggle('active', (b as HTMLElement).dataset.deck === savedDeck);
+    });
+
+    // 3. Card Back Design
+    const savedBack = localStorage.getItem('solitaire_card_back') || 'blue-lattice';
+    this.applyCardBack(savedBack);
+    document.querySelectorAll('[data-cardback]').forEach(b => {
+      b.classList.toggle('active', (b as HTMLElement).dataset.cardback === savedBack);
+    });
+
+    // 4. Draw Mode & Scoring Mode
+    const savedDraw = parseInt(localStorage.getItem('solitaire_draw_mode') || '1', 10) as DrawMode;
+    this.engine.state.drawMode = savedDraw === 3 ? 3 : 1;
+    document.querySelectorAll('[data-draw]').forEach(b => {
+      b.classList.toggle('active', parseInt((b as HTMLElement).dataset.draw || '1', 10) === this.engine.state.drawMode);
+    });
+
+    const savedScoring = (localStorage.getItem('solitaire_scoring_mode') || 'standard') as ScoringMode;
+    this.engine.state.scoringMode = savedScoring === 'vegas' ? 'vegas' : 'standard';
+    document.querySelectorAll('[data-scoring]').forEach(b => {
+      b.classList.toggle('active', (b as HTMLElement).dataset.scoring === this.engine.state.scoringMode);
     });
   }
 

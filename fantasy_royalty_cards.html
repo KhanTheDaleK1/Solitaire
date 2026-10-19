@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>MobilityWare Fantasy Royalty Card Theme</title>
+  <style>
+    :root {
+      --card-bg: #f7f2e4;
+      --card-border: #4a4233;
+      --card-radius: 9px;
+      --suit-red: #aa2424;
+      --suit-black: #1a2f45;
+      --font-rank: 'Cinzel', 'Plus Jakarta Sans', -apple-system, serif;
+    }
+
+    body {
+      margin: 0;
+      padding: 40px 20px;
+      background: #173859; /* Blue felt background matching screenshot */
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    h1 {
+      font-size: 22px;
+      margin-bottom: 6px;
+      font-weight: 700;
+      color: #fef08a;
+      text-align: center;
+    }
+
+    p.desc {
+      font-size: 13px;
+      color: #cbd5e1;
+      max-width: 600px;
+      text-align: center;
+      margin-bottom: 30px;
+    }
+
+    .hand-container {
+      display: flex;
+      gap: -10px; /* Slight overlap or snug alignment */
+      background: rgba(0, 0, 0, 0.2);
+      padding: 24px;
+      border-radius: 18px;
+      box-shadow: 0 12px 36px rgba(0,0,0,0.4);
+      position: relative;
+    }
+
+    /* Unlock Gem in Top Right */
+    .gem-badge {
+      position: absolute;
+      top: -12px;
+      right: -12px;
+      width: 38px;
+      height: 38px;
+      background: linear-gradient(135deg, #f59e0b, #fbbf24);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+      border: 2px solid #fff;
+      font-size: 18px;
+    }
+
+    .card {
+      width: 130px;
+      height: 195px;
+      background: var(--card-bg);
+      border: 1.5px solid var(--card-border);
+      border-radius: var(--card-radius);
+      box-shadow: 2px 4px 12px rgba(0, 0, 0, 0.45);
+      position: relative;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      box-sizing: border-box;
+      user-select: none;
+      margin-right: -1px; /* seamless alignment like in screenshot */
+    }
+
+    .card-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      padding: 8px 10px;
+      z-index: 2;
+    }
+
+    .rank {
+      font-size: 38px;
+      font-weight: 800;
+      line-height: 0.85;
+      letter-spacing: -1px;
+      font-family: 'Times New Roman', Times, serif;
+    }
+
+    .card.red { color: var(--suit-red); }
+    .card.black { color: var(--suit-black); }
+
+    .suit-svg {
+      width: 28px;
+      height: 28px;
+    }
+
+    /* Character Artwork Layer */
+    .character-layer {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 100%;
+      height: 75%;
+      pointer-events: none;
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+    }
+
+    .character-layer svg {
+      width: 100%;
+      height: 100%;
+      overflow: visible;
+    }
+
+    /* Ace Giant Pip */
+    .ace-pip {
+      position: absolute;
+      top: 55%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: 90px;
+      height: 105px;
+    }
+
+    .breakdown-box {
+      max-width: 700px;
+      margin-top: 36px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 14px;
+      padding: 20px 26px;
+      line-height: 1.6;
+      font-size: 14px;
+    }
+
+    .breakdown-box h3 {
+      margin-top: 0;
+      color: #fde047;
+      font-size: 16px;
+    }
+
+    .breakdown-box ul {
+      margin: 8px 0 0 0;
+      padding-left: 20px;
+    }
+
+    .breakdown-box li {
+      margin-bottom: 6px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>"Fantasy High Royalty" Theme</h1>
+  <p class="desc">A breakdown and SVG vector recreation of the illustrated storybook court style from the screenshot.</p>
+
+  <div class="hand-container">
+    <div class="gem-badge">💎</div>
+
+    <!-- JACK OF HEARTS -->
+    <div class="card red">
+      <div class="card-header">
+        <span class="rank">J</span>
+        <svg class="suit-svg" viewBox="0 0 100 100">
+          <!-- Ornate Filigree Heart -->
+          <path fill="var(--suit-red)" d="M50 88 C20 65 5 45 5 28 A22 22 0 0 1 50 18 A22 22 0 0 1 95 28 C95 45 80 65 50 88 Z" />
+          <path fill="#f7f2e4" d="M50 35 L47 45 L50 65 L53 45 Z" />
+          <circle cx="50" cy="28" r="4" fill="#f7f2e4" />
+          <path fill="#f7f2e4" d="M35 32 C35 38 42 42 47 45 C43 40 40 33 35 32 Z" />
+          <path fill="#f7f2e4" d="M65 32 C65 38 58 42 53 45 C57 40 60 33 65 32 Z" />
+        </svg>
+      </div>
+      <div class="character-layer">
+        <svg viewBox="0 0 130 150">
+          <!-- Flowing Auburn Hair -->
+          <path fill="#7c2d2d" d="M10 60 C-5 95 20 145 35 150 C25 125 15 100 25 75 Z"/>
+          <path fill="#8b3a3a" d="M20 50 C2 85 8 130 25 145 C15 110 20 80 35 60 Z"/>
+          <!-- Body / Plate Armor & Red Cloak -->
+          <path fill="#991b1b" d="M15 150 C20 110 35 90 65 90 C95 90 115 110 120 150 Z" />
+          <path fill="#cbd5e1" stroke="#475569" stroke-width="2" d="M35 150 L40 105 L65 100 L90 105 L95 150 Z" />
+          <path fill="#e2e8f0" d="M50 115 L65 110 L80 115 L65 140 Z" />
+          <polygon points="65,118 71,128 65,138 59,128" fill="#dc2626" stroke="#fbbf24" stroke-width="1"/>
+          <!-- Gold Pauldrons -->
+          <path fill="#d97706" stroke="#92400e" stroke-width="1.5" d="M85 95 C105 95 118 105 115 125 C105 125 90 115 85 95 Z"/>
+          <circle cx="102" cy="112" r="4" fill="#2563eb" />
+          <!-- Head / Face -->
+          <path fill="#fed7aa" d="M48 55 C48 40 60 30 72 30 C82 30 88 40 88 55 C88 72 75 80 68 80 C60 80 48 72 48 55 Z"/>
+          <!-- Circlet -->
+          <path fill="#f59e0b" d="M50 42 Q68 35 86 42 Q68 39 50 42 Z"/>
+          <polygon points="68,36 71,40 65,40" fill="#dc2626"/>
+          <!-- Eyes & Expression -->
+          <path stroke="#7c2d2d" stroke-width="1.5" fill="none" d="M56 52 Q62 50 65 52"/>
+          <path stroke="#7c2d2d" stroke-width="1.5" fill="none" d="M72 52 Q77 50 82 52"/>
+          <ellipse cx="61" cy="54" rx="2" ry="1.5" fill="#451a03"/>
+          <ellipse cx="76" cy="54" rx="2" ry="1.5" fill="#451a03"/>
+          <path stroke="#b45309" stroke-width="1.5" fill="none" d="M68 56 L67 65 L71 65"/>
+          <path stroke="#991b1b" stroke-width="1.5" fill="none" d="M62 72 Q68 75 74 72"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- QUEEN OF SPADES -->
+    <div class="card black">
+      <div class="card-header">
+        <span class="rank">Q</span>
+        <svg class="suit-svg" viewBox="0 0 100 100">
+          <!-- Ornate Filigree Spade -->
+          <path fill="var(--suit-black)" d="M50 10 C50 10 90 45 90 62 C90 75 80 82 68 82 C56 82 52 74 50 70 C48 74 44 82 32 82 C20 82 10 75 10 62 C10 45 50 10 50 10 Z" />
+          <path fill="var(--suit-black)" d="M45 75 L40 92 L60 92 L55 75 Z" />
+          <!-- Filigree Cutouts -->
+          <path fill="#f7f2e4" d="M50 25 L47 45 L50 62 L53 45 Z" />
+          <path fill="#f7f2e4" d="M35 60 C35 52 42 46 47 45 C43 52 40 58 35 60 Z" />
+          <path fill="#f7f2e4" d="M65 60 C65 52 58 46 53 45 C57 52 60 58 65 60 Z" />
+        </svg>
+      </div>
+      <div class="character-layer">
+        <svg viewBox="0 0 130 150">
+          <!-- Flowing Turquoise Hair -->
+          <path fill="#14b8a6" d="M10 75 C-10 110 15 140 35 150 C15 125 15 95 30 75 Z"/>
+          <path fill="#0d9488" d="M25 60 C5 95 10 130 25 145 C15 110 25 80 40 60 Z"/>
+          <path fill="#2dd4bf" d="M85 60 C115 80 125 110 115 140 C110 110 100 90 85 70 Z"/>
+          <!-- Royal Gown / Bustier -->
+          <path fill="#1e3a8a" stroke="#fbbf24" stroke-width="1.5" d="M30 150 C35 110 45 100 70 100 C95 100 105 110 115 150 Z" />
+          <path fill="#ffffff" d="M50 108 Q70 118 90 108 Q70 102 50 108 Z"/>
+          <ellipse cx="70" cy="115" rx="5" ry="5" fill="#2563eb" stroke="#fbbf24" stroke-width="1.5"/>
+          <!-- Head / Face -->
+          <path fill="#ffedd5" d="M50 55 C50 40 60 32 70 32 C80 32 88 40 88 55 C88 72 78 78 70 78 C62 78 50 72 50 55 Z"/>
+          <!-- Ornate Gold Crown -->
+          <path fill="#f59e0b" stroke="#b45309" stroke-width="1" d="M52 35 L50 20 L60 27 L70 15 L80 27 L90 20 L88 35 Z"/>
+          <circle cx="70" cy="19" r="2.5" fill="#dc2626"/>
+          <circle cx="53" cy="24" r="2" fill="#2563eb"/>
+          <circle cx="87" cy="24" r="2" fill="#2563eb"/>
+          <!-- Eyes & Soft Smile -->
+          <path stroke="#0f766e" stroke-width="1.5" fill="none" d="M58 52 Q63 50 66 52"/>
+          <path stroke="#0f766e" stroke-width="1.5" fill="none" d="M74 52 Q78 50 82 52"/>
+          <ellipse cx="62" cy="54" rx="2" ry="1.5" fill="#0d9488"/>
+          <ellipse cx="78" cy="54" rx="2" ry="1.5" fill="#0d9488"/>
+          <path stroke="#ea580c" stroke-width="1.5" fill="none" d="M64 70 Q70 73 76 70"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- KING OF DIAMONDS -->
+    <div class="card red">
+      <div class="card-header">
+        <span class="rank">K</span>
+        <svg class="suit-svg" viewBox="0 0 100 100">
+          <!-- Ornate Filigree Diamond -->
+          <polygon points="50,8 90,50 50,92 10,50" fill="var(--suit-red)" />
+          <path fill="#f7f2e4" d="M50 25 L47 50 L50 75 L53 50 Z" />
+          <circle cx="50" cy="50" r="4" fill="#f7f2e4" />
+          <path fill="#f7f2e4" d="M35 50 Q43 45 47 50 Q43 55 35 50 Z" />
+          <path fill="#f7f2e4" d="M65 50 Q57 45 53 50 Q57 55 65 50 Z" />
+        </svg>
+      </div>
+      <div class="character-layer">
+        <svg viewBox="0 0 130 150">
+          <!-- Ermine Fur Collar & Robes -->
+          <path fill="#7f1d1d" d="M15 150 C20 100 35 85 70 85 C105 85 115 100 120 150 Z" />
+          <path fill="#f8fafc" stroke="#cbd5e1" stroke-width="2" d="M30 150 C32 110 45 92 65 92 C85 92 98 110 100 150 L88 150 C85 115 78 105 65 105 C52 105 45 115 42 150 Z"/>
+          <!-- Ermine Tails / Spots -->
+          <ellipse cx="40" cy="120" rx="2" ry="4" fill="#1e293b"/>
+          <ellipse cx="90" cy="120" rx="2" ry="4" fill="#1e293b"/>
+          <!-- Head, Dark Hair & Full Beard -->
+          <path fill="#451a03" d="M42 55 C35 75 40 105 50 115 C60 125 78 125 88 115 C98 105 102 75 95 55 Z"/>
+          <path fill="#fed7aa" d="M52 50 C52 40 60 32 70 32 C80 32 88 40 88 50 C88 65 80 75 70 75 C60 75 52 65 52 50 Z"/>
+          <!-- Mustache and Beard -->
+          <path fill="#451a03" d="M58 68 Q70 74 82 68 Q70 82 58 68 Z"/>
+          <!-- Regal Pointed Crown -->
+          <path fill="#d97706" stroke="#78350f" stroke-width="1.5" d="M50 34 L48 18 L58 26 L70 12 L82 26 L92 18 L90 34 Z"/>
+          <polygon points="70,16 73,22 67,22" fill="#dc2626"/>
+          <circle cx="58" cy="28" r="2.5" fill="#2563eb"/>
+          <circle cx="82" cy="28" r="2.5" fill="#2563eb"/>
+          <!-- Eyes -->
+          <ellipse cx="61" cy="50" rx="2" ry="1.5" fill="#1c1917"/>
+          <ellipse cx="79" cy="50" rx="2" ry="1.5" fill="#1c1917"/>
+        </svg>
+      </div>
+    </div>
+
+    <!-- ACE OF CLUBS -->
+    <div class="card black">
+      <div class="card-header">
+        <span class="rank">A</span>
+        <svg class="suit-svg" viewBox="0 0 100 100">
+          <circle cx="50" cy="35" r="20" fill="var(--suit-black)"/>
+          <circle cx="32" cy="60" r="20" fill="var(--suit-black)"/>
+          <circle cx="68" cy="60" r="20" fill="var(--suit-black)"/>
+          <path d="M45 60 L40 90 L60 90 L55 60 Z" fill="var(--suit-black)"/>
+          <circle cx="50" cy="50" r="6" fill="#f7f2e4"/>
+        </svg>
+      </div>
+
+      <!-- Giant Center Ornate Pip -->
+      <svg class="ace-pip" viewBox="0 0 100 120">
+        <!-- Base Club Shape with Intricate Silhouette -->
+        <circle cx="50" cy="38" r="24" fill="var(--suit-black)"/>
+        <circle cx="28" cy="70" r="24" fill="var(--suit-black)"/>
+        <circle cx="72" cy="70" r="24" fill="var(--suit-black)"/>
+        <path d="M42 70 L35 110 L65 110 L58 70 Z" fill="var(--suit-black)"/>
+        
+        <!-- Gothic / Floral Inner Inlay (#4a6fa5) -->
+        <path fill="#40648c" d="M50 18 C55 28 62 35 62 45 C62 55 50 62 50 62 C50 62 38 55 38 45 C38 35 45 28 50 18 Z"/>
+        <path fill="#40648c" d="M15 70 C25 65 35 60 45 62 C38 72 25 80 15 70 Z"/>
+        <path fill="#40648c" d="M85 70 C75 65 65 60 55 62 C62 72 75 80 85 70 Z"/>
+        <path fill="#f7f2e4" d="M50 40 L46 55 L50 70 L54 55 Z"/>
+        <circle cx="50" cy="55" r="4" fill="#f7f2e4"/>
+      </svg>
+    </div>
+  </div>
+
+  <div class="breakdown-box">
+    <h3>Design Anatomy of this Theme:</h3>
+    <ul>
+      <li><strong>Parchment Stock:</strong> Subtle warm ivory (<code>#f7f2e4</code>) paired with a charcoal-umber border (<code>#4a4233</code>) to ground the fantasy aesthetic without glowing white.</li>
+      <li><strong>Asymmetrical Storybook Characters:</strong> Full-bust illustrated portraits with expressive hair dynamics (crimson, teal, dark curls) and historical garments (pauldrons, ermine fur, tiaras).</li>
+      <li><strong>Ornate Filigree Pips:</strong> Rather than flat geometric suits, each suit features inner cutouts and heraldic flourish inlays.</li>
+      <li><strong>Maximized Ace of Spades/Clubs:</strong> The Ace features an oversized centerpiece heraldic emblem (~60% of card height) with two-tone shaded ornamental detailing.</li>
+    </ul>
+  </div>
+
+</body>
+</html>

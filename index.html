@@ -3,12 +3,12 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    
+
     <!-- Primary Meta Tags -->
-    <title>Solitaire | Mobile-First Klondike PWA</title>
-    <meta name="title" content="Solitaire | Mobile-First Klondike PWA" />
-    <meta name="description" content="A fast, touch-optimized, mobile-first Klondike Solitaire Progressive Web App with Google & GitHub cloud sync." />
-    
+    <title>Solitaire | MobilityWare Klondike PWA</title>
+    <meta name="title" content="Solitaire | MobilityWare Klondike PWA" />
+    <meta name="description" content="A fast, touch-optimized MobilityWare Klondike Solitaire Progressive Web App with Daily Challenges, Jigsaw Puzzles, Rankings, and Google & GitHub Cloud Sync." />
+
     <!-- PWA & Mobile Web Capabilities -->
     <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="theme-color" content="#0d472a" />
@@ -16,7 +16,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Solitaire" />
-    
+
     <!-- Icons -->
     <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
@@ -27,19 +27,22 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/src/style.css" />
   </head>
-  <body class="theme-classic">
+  <body class="theme-classic deck-classic back-blue-lattice">
     <div id="app" class="app-container">
       <!-- Top Navigation & Scoreboard -->
       <header class="game-header">
         <div class="header-left">
-          <button id="btn-menu" class="icon-btn" aria-label="Settings" title="Settings">
+          <button id="btn-menu" class="icon-btn" aria-label="Settings & Themes" title="Settings & Themes">
             <svg viewBox="0 0 24 24" class="icon"><path fill="currentColor" d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
           </button>
-          <button id="btn-stats" class="icon-btn" aria-label="Statistics" title="Statistics">
+          <button id="btn-stats" class="icon-btn" aria-label="Statistics & Rankings" title="Statistics & Rankings">
             <svg viewBox="0 0 24 24" class="icon"><path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 10h2v7H7zm4-3h2v10h-2zm4 6h2v4h-2z"/></svg>
           </button>
           <button id="btn-daily" class="icon-btn btn-crown" aria-label="Daily Challenges & Crowns" title="Daily Challenges">
             <svg viewBox="0 0 24 24" class="icon crown-svg"><path fill="currentColor" d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .55-.45 1-1 1H6c-.55 0-1-.45-1-1v-1h14v1z"/></svg>
+          </button>
+          <button id="btn-puzzles" class="icon-btn btn-puzzle" aria-label="Jigsaw Puzzles & Events" title="Jigsaw Puzzles & Events">
+            <span class="puzzle-btn-emoji">🧩</span>
           </button>
         </div>
 
@@ -59,6 +62,10 @@
         </div>
 
         <div class="header-right">
+          <button id="btn-rank-badge" class="rank-pill" title="Player Rank & Level">
+            <span id="hud-rank-icon">💎</span>
+            <span id="hud-level-text">Lv.75</span>
+          </button>
           <!-- Auth Profile Button -->
           <button id="btn-auth" class="auth-btn" aria-label="User Account">
             <span id="auth-avatar" class="avatar-placeholder">
@@ -85,6 +92,7 @@
               <div class="card-placeholder stock-empty-slot">
                 <svg viewBox="0 0 24 24" class="slot-icon"><path fill="currentColor" d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/></svg>
               </div>
+              <span id="stock-count-badge" class="stock-count-badge">24</span>
             </div>
             <div id="pile-waste" class="pile waste-pile" aria-label="Waste Pile">
               <div class="card-placeholder"></div>
@@ -122,23 +130,27 @@
         </section>
       </main>
 
-      <!-- Bottom Controls Toolbar -->
+      <!-- Bottom Controls Toolbar (MobilityWare Layout) -->
       <footer class="bottom-toolbar">
-        <button id="btn-new-game" class="toolbar-btn" title="New Game">
-          <svg viewBox="0 0 24 24" class="icon"><path fill="currentColor" d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/></svg>
-          <span>New</span>
+        <button id="btn-open-themes" class="toolbar-btn" title="Customize Themes, Cards & Backgrounds">
+          <svg viewBox="0 0 24 24" class="icon"><path fill="currentColor" d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+          <span>Themes</span>
         </button>
-        <button id="btn-undo" class="toolbar-btn" title="Undo Move">
-          <svg viewBox="0 0 24 24" class="icon"><path fill="currentColor" d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg>
-          <span>Undo</span>
+        <button id="btn-new-game" class="toolbar-btn" title="Play / Deal Menu">
+          <svg viewBox="0 0 24 24" class="icon"><path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 14l-5-5 1.41-1.41L11 13.17l6.59-6.59L19 8l-7 9z"/></svg>
+          <span>Play</span>
         </button>
         <button id="btn-hint" class="toolbar-btn" title="Show Hint">
           <svg viewBox="0 0 24 24" class="icon"><path fill="currentColor" d="M9 21c0 .55.45 1 1 1h4c.55 0 1-.45 1-1v-1H9v1zm3-19C8.14 2 5 5.14 5 9c0 2.38 1.19 4.47 3 5.74V17c0 .55.45 1 1 1h6c.55 0 1-.45 1-1v-2.26c1.81-1.27 3-3.36 3-5.74 0-3.86-3.14-7-7-7zm2.85 11.1l-.85.6V16h-4v-1.3l-.85-.6A5.006 5.006 0 0 1 7 9c0-2.76 2.24-5 5-5s5 2.24 5 5c0 1.63-.8 3.16-2.15 4.1z"/></svg>
           <span>Hint</span>
         </button>
-        <button id="btn-auto-finish" class="toolbar-btn btn-highlight hidden" title="Auto Finish Game">
+        <button id="btn-undo" class="toolbar-btn" title="Undo Move">
+          <svg viewBox="0 0 24 24" class="icon"><path fill="currentColor" d="M12.5 8c-2.65 0-5.05.99-6.9 2.6L2 7v9h9l-3.62-3.62c1.39-1.16 3.16-1.88 5.12-1.88 3.54 0 6.55 2.31 7.6 5.5l2.37-.78C21.08 11.03 17.15 8 12.5 8z"/></svg>
+          <span>Undo</span>
+        </button>
+        <button id="btn-auto-finish" class="toolbar-btn btn-highlight hidden" title="Auto Complete Hand">
           <svg viewBox="0 0 24 24" class="icon"><path fill="currentColor" d="m19 9 1.25-2.75L23 5l-2.75-1.25L19 1l-1.25 2.75L15 5l2.75 1.25L19 9zm-7.5.5L9 4 6.5 9.5 1 12l5.5 2.5L9 20l2.5-5.5L17 12l-5.5-2.5zM19 15l-1.25 2.75L15 19l2.75 1.25L19 23l1.25-2.75L23 19l-2.75-1.25L19 15z"/></svg>
-          <span>Finish</span>
+          <span>Auto Complete</span>
         </button>
       </footer>
     </div>
@@ -151,10 +163,48 @@
 
     <!-- Modals Container -->
     <div id="modal-container" class="modal-backdrop hidden">
-      <!-- Settings Modal -->
-      <div id="modal-settings" class="modal-card hidden">
+      <!-- MobilityWare Play / Deal Menu Modal -->
+      <div id="modal-play-menu" class="modal-card hidden">
         <div class="modal-header">
-          <h2>Game Settings</h2>
+          <h2>New Deal</h2>
+          <button class="modal-close-btn" data-close>&times;</button>
+        </div>
+        <div class="modal-body play-menu-list">
+          <button id="btn-deal-winning" class="play-option-btn play-option-winning">
+            <span class="play-opt-icon">🏆</span>
+            <div class="play-opt-text">
+              <span class="play-opt-title">Winning Deal</span>
+              <span class="play-opt-sub">Guaranteed solvable MobilityWare deal</span>
+            </div>
+          </button>
+          <button id="btn-deal-random" class="play-option-btn">
+            <span class="play-opt-icon">🃏</span>
+            <div class="play-opt-text">
+              <span class="play-opt-title">Random Shuffle</span>
+              <span class="play-opt-sub">Standard 52-card random shuffle</span>
+            </div>
+          </button>
+          <button id="btn-deal-replay" class="play-option-btn">
+            <span class="play-opt-icon">🔄</span>
+            <div class="play-opt-text">
+              <span class="play-opt-title">Replay Current Deal</span>
+              <span class="play-opt-sub">Restart this exact hand from the beginning</span>
+            </div>
+          </button>
+          <button id="btn-deal-daily" class="play-option-btn play-option-crown">
+            <span class="play-opt-icon">👑</span>
+            <div class="play-opt-text">
+              <span class="play-opt-title">Today's Daily Challenge</span>
+              <span class="play-opt-sub">Win Today's Crown & Trophy progress</span>
+            </div>
+          </button>
+        </div>
+      </div>
+
+      <!-- Settings & Theme Customization Modal -->
+      <div id="modal-settings" class="modal-card modal-scrollable hidden">
+        <div class="modal-header">
+          <h2>Settings & Customization</h2>
           <button class="modal-close-btn" data-close>&times;</button>
         </div>
         <div class="modal-body">
@@ -171,6 +221,17 @@
 
           <div class="setting-item">
             <div class="setting-text">
+              <span class="setting-title">Scoring Mode</span>
+              <span class="setting-desc">Klondike points or Vegas ($52 buy-in)</span>
+            </div>
+            <div class="segmented-control">
+              <button class="segment-btn active" data-scoring="standard">Standard</button>
+              <button class="segment-btn" data-scoring="vegas">Vegas</button>
+            </div>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-text">
               <span class="setting-title">Handedness</span>
               <span class="setting-desc">Swap stock and foundation sides</span>
             </div>
@@ -182,21 +243,100 @@
 
           <div class="setting-item setting-item-stacked">
             <div class="setting-text">
-              <span class="setting-title">Deck Theme</span>
-              <span class="setting-desc">Card stock, face indices & back art</span>
+              <span class="setting-title">Table Background</span>
+              <span class="setting-desc">MobilityWare felt, wood & scenic backgrounds</span>
             </div>
-            <div class="segmented-control segmented-4">
+            <div class="bg-grid-picker">
+              <button class="bg-swatch active" data-theme="classic" title="Classic Green Felt">
+                <span class="swatch-preview swatch-classic"></span>
+                <span class="swatch-label">Green Felt</span>
+              </button>
+              <button class="bg-swatch" data-theme="royal" title="Royal Blue Velvet">
+                <span class="swatch-preview swatch-royal"></span>
+                <span class="swatch-label">Royal Blue</span>
+              </button>
+              <button class="bg-swatch" data-theme="crimson" title="Casino Crimson">
+                <span class="swatch-preview swatch-crimson"></span>
+                <span class="swatch-label">Crimson</span>
+              </button>
+              <button class="bg-swatch" data-theme="wood" title="Mahogany Wood">
+                <span class="swatch-preview swatch-wood"></span>
+                <span class="swatch-label">Mahogany</span>
+              </button>
+              <button class="bg-swatch" data-theme="ocean" title="Tropical Ocean">
+                <span class="swatch-preview swatch-ocean"></span>
+                <span class="swatch-label">Ocean</span>
+              </button>
+              <button class="bg-swatch" data-theme="starlight" title="Starlight Sky">
+                <span class="swatch-preview swatch-starlight"></span>
+                <span class="swatch-label">Starlight</span>
+              </button>
+              <button class="bg-swatch" data-theme="amethyst" title="Royal Amethyst">
+                <span class="swatch-preview swatch-amethyst"></span>
+                <span class="swatch-label">Amethyst</span>
+              </button>
+              <button class="bg-swatch" data-theme="midnight" title="Midnight Obsidian">
+                <span class="swatch-preview swatch-midnight"></span>
+                <span class="swatch-label">Midnight</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="setting-item setting-item-stacked">
+            <div class="setting-text">
+              <span class="setting-title">Card Face Style</span>
+              <span class="setting-desc">Court illustrations, typography & card stock</span>
+            </div>
+            <div class="segmented-control segmented-5">
               <button class="segment-btn active" data-deck="classic">Classic</button>
-              <button class="segment-btn" data-deck="modern">Modern</button>
-              <button class="segment-btn" data-deck="midnight">Midnight</button>
+              <button class="segment-btn" data-deck="modern">Big Index</button>
+              <button class="segment-btn" data-deck="midnight">Dark</button>
               <button class="segment-btn" data-deck="crown">Crown</button>
+              <button class="segment-btn" data-deck="fantasy">Fantasy 💎</button>
+            </div>
+          </div>
+
+          <div class="setting-item setting-item-stacked">
+            <div class="setting-text">
+              <span class="setting-title">Card Back Design</span>
+              <span class="setting-desc">Choose your MobilityWare card back art</span>
+            </div>
+            <div class="cardback-grid-picker">
+              <button class="cardback-opt active" data-cardback="blue-lattice" title="Classic Blue">
+                <div class="mini-cardback cb-blue-lattice">❖</div>
+                <span>Blue</span>
+              </button>
+              <button class="cardback-opt" data-cardback="red-lattice" title="Classic Red">
+                <div class="mini-cardback cb-red-lattice">❖</div>
+                <span>Red</span>
+              </button>
+              <button class="cardback-opt" data-cardback="gold-crown" title="Royal Crown">
+                <div class="mini-cardback cb-gold-crown">👑</div>
+                <span>Crown</span>
+              </button>
+              <button class="cardback-opt" data-cardback="fantasy-crest" title="Fantasy Royalty">
+                <div class="mini-cardback cb-fantasy-crest">💎</div>
+                <span>Fantasy</span>
+              </button>
+              <button class="cardback-opt" data-cardback="ocean-wave" title="Ocean Wave">
+                <div class="mini-cardback cb-ocean-wave">🌊</div>
+                <span>Ocean</span>
+              </button>
+              <button class="cardback-opt" data-cardback="emerald-crest" title="Emerald Crest">
+                <div class="mini-cardback cb-emerald-crest">⚜</div>
+                <span>Emerald</span>
+              </button>
+              <button class="cardback-opt" data-cardback="galaxy-night" title="Starlight Galaxy">
+                <div class="mini-cardback cb-galaxy-night">✦</div>
+                <span>Galaxy</span>
+              </button>
             </div>
           </div>
 
           <div class="setting-item">
             <div class="setting-text">
               <span class="setting-title">Sound Effects</span>
-              <span class="setting-desc">Tactile foley & chimes</span>
+              <span class="setting-desc">Paper card foley & ascending chimes</span>
             </div>
             <label class="toggle-switch">
               <input type="checkbox" id="toggle-sound" checked />
@@ -214,24 +354,11 @@
               <span class="toggle-slider"></span>
             </label>
           </div>
-
-          <div class="setting-item">
-            <div class="setting-text">
-              <span class="setting-title">Theme</span>
-              <span class="setting-desc">Board felt color</span>
-            </div>
-            <div class="theme-picker">
-              <button class="theme-chip theme-chip-green active" data-theme="classic" title="Classic Green Felt"></button>
-              <button class="theme-chip theme-chip-blue" data-theme="royal" title="Royal Blue"></button>
-              <button class="theme-chip theme-chip-red" data-theme="crimson" title="Crimson"></button>
-              <button class="theme-chip theme-chip-dark" data-theme="midnight" title="Midnight Velvet"></button>
-            </div>
-          </div>
         </div>
       </div>
 
       <!-- Daily Challenge & Crown Calendar Modal -->
-      <div id="modal-calendar" class="modal-card modal-calendar-card hidden">
+      <div id="modal-calendar" class="modal-card modal-calendar-card modal-scrollable hidden">
         <div class="modal-header">
           <div class="calendar-header-title">
             <span class="crown-badge-header">👑</span>
@@ -251,6 +378,9 @@
             <div class="cal-trophy-info">
               <div class="cal-trophy-status" id="cal-trophy-title">CURRENT TROPHY: [★ GOLD TROPHY UNLOCKED ★]</div>
               <div class="cal-trophy-desc" id="cal-trophy-desc">Crowns: <strong id="cal-crown-count">19</strong> / 20 for Gold Trophy</div>
+              <div class="trophy-tier-bar">
+                <div id="cal-trophy-fill" class="trophy-tier-fill" style="width: 95%"></div>
+              </div>
             </div>
           </div>
 
@@ -261,33 +391,6 @@
             <!-- Dynamically populated -->
           </div>
 
-          <div class="cal-meta-section">
-            <div class="meta-row">
-              <div class="meta-item">
-                <span class="meta-label">LEVEL</span>
-                <span class="meta-val" id="meta-level">75</span>
-              </div>
-              <div class="meta-item">
-                <span class="meta-label">TOTAL STARS</span>
-                <span class="meta-val" id="meta-stars">62,300 ★</span>
-              </div>
-              <div class="meta-item">
-                <span class="meta-label">NEXT LEVEL</span>
-                <span class="meta-val" id="meta-stars-next">890 ★</span>
-              </div>
-            </div>
-            <div class="meta-jigsaw-box">
-              <div class="meta-jigsaw-title">
-                <span>🧩 Jigsaw Event: <strong id="meta-jigsaw-name">Autumn Cabin</strong></span>
-                <span class="meta-jigsaw-badge" id="meta-jigsaw-badges">6 Badges</span>
-              </div>
-              <div class="meta-jigsaw-stats">
-                <span>Pieces: <strong id="meta-jigsaw-pieces">226</strong></span>
-                <span>Puzzles Solved: <strong id="meta-jigsaw-puzzles">12</strong></span>
-              </div>
-            </div>
-          </div>
-
           <div class="cal-actions">
             <button id="btn-play-daily-selected" class="btn-primary">
               <span id="btn-play-daily-text">Play Selected Hand</span>
@@ -296,13 +399,76 @@
         </div>
       </div>
 
-      <!-- Stats Modal -->
-      <div id="modal-stats" class="modal-card hidden">
+      <!-- MobilityWare Jigsaw Puzzles & Collectible Badges Modal -->
+      <div id="modal-puzzles" class="modal-card modal-scrollable hidden">
         <div class="modal-header">
-          <h2>Player Statistics</h2>
+          <div class="calendar-header-title">
+            <span class="crown-badge-header">🧩</span>
+            <h2>Jigsaw Puzzle Events</h2>
+          </div>
           <button class="modal-close-btn" data-close>&times;</button>
         </div>
         <div class="modal-body">
+          <div class="puzzle-summary-bar">
+            <div class="puz-stat">
+              <span class="puz-stat-lbl">PIECES EARNED</span>
+              <span id="puz-total-pieces" class="puz-stat-val">226</span>
+            </div>
+            <div class="puz-stat">
+              <span class="puz-stat-lbl">PUZZLES SOLVED</span>
+              <span id="puz-total-solved" class="puz-stat-val">12</span>
+            </div>
+            <div class="puz-stat">
+              <span class="puz-stat-lbl">BADGES</span>
+              <span id="puz-total-badges" class="puz-stat-val">6 🏅</span>
+            </div>
+          </div>
+
+          <!-- Puzzle Selector Tabs -->
+          <div id="puzzle-selector" class="puzzle-selector"></div>
+
+          <!-- Interactive 4x4 Jigsaw Board -->
+          <div class="jigsaw-frame">
+            <div class="jigsaw-header-row">
+              <span id="jigsaw-active-title" class="jigsaw-active-title">🏡 Autumn Cabin</span>
+              <span id="jigsaw-active-progress" class="jigsaw-active-progress">14 / 16 Pieces</span>
+            </div>
+            <div id="jigsaw-board" class="jigsaw-board"></div>
+          </div>
+
+          <p class="puzzle-hint-text">Win Solitaire hands and Daily Challenges to unlock new puzzle pieces and earn collectible event badges!</p>
+
+          <button id="btn-claim-free-piece" class="btn-primary">
+            <span>🎁 Claim Bonus Puzzle Piece</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Stats, Progression & Global Rankings Modal -->
+      <div id="modal-stats" class="modal-card modal-scrollable hidden">
+        <div class="modal-header">
+          <h2>Statistics & Rankings</h2>
+          <button class="modal-close-btn" data-close>&times;</button>
+        </div>
+        <div class="modal-body">
+          <!-- MobilityWare Player Rank & XP Card -->
+          <div class="rank-banner-card">
+            <div class="rank-banner-top">
+              <div class="rank-emblem-circle" id="stats-rank-icon">💎</div>
+              <div class="rank-banner-info">
+                <span class="rank-title-label" id="stats-rank-title">SOLITAIRE ROYALTY</span>
+                <span class="rank-level-sub">Level <strong id="stats-level-num">75</strong> &bull; <strong id="stats-total-stars">62,300 ★</strong></span>
+              </div>
+            </div>
+            <div class="xp-bar-track">
+              <div id="stats-xp-fill" class="xp-bar-fill" style="width: 45%"></div>
+            </div>
+            <div class="xp-bar-caption">
+              <span id="stats-xp-next">890 ★ to Level 76</span>
+              <span>Win +150 ★ per hand</span>
+            </div>
+          </div>
+
           <div class="stats-grid">
             <div class="stat-box">
               <span class="stat-number" id="stats-played">0</span>
@@ -322,11 +488,22 @@
             </div>
             <div class="stat-box">
               <span class="stat-number" id="stats-best-score">0</span>
-              <span class="stat-box-label">Best Score</span>
+              <span class="stat-box-label">High Score</span>
             </div>
             <div class="stat-box">
               <span class="stat-number" id="stats-best-time">--:--</span>
               <span class="stat-box-label">Best Time</span>
+            </div>
+          </div>
+
+          <!-- MobilityWare Leaderboard Section -->
+          <div class="leaderboard-card">
+            <div class="leaderboard-header">
+              <span>🏆 MobilityWare Leaderboard</span>
+              <span class="leaderboard-tag">All-Time Score</span>
+            </div>
+            <div id="leaderboard-list" class="leaderboard-list">
+              <!-- Populated dynamically -->
             </div>
           </div>
 
@@ -344,14 +521,14 @@
       </div>
 
       <!-- Import MobilityWare Save Modal -->
-      <div id="modal-import" class="modal-card hidden">
+      <div id="modal-import" class="modal-card modal-scrollable hidden">
         <div class="modal-header">
           <h2>Import Save Data</h2>
           <button class="modal-close-btn" data-close>&times;</button>
         </div>
         <div class="modal-body">
           <p class="auth-intro">Import stats from <strong>MobilityWare Solitaire</strong> (Android <code>.xml</code>, iOS <code>.plist</code>, <code>.sqlite</code>, or <code>.json</code>).</p>
-          
+
           <div id="drop-zone" class="drop-zone">
             <svg viewBox="0 0 24 24" class="drop-icon"><path fill="currentColor" d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
             <span class="drop-text">Drag & drop your save file here</span>
@@ -393,15 +570,15 @@
       </div>
 
       <!-- Auth Modal -->
-      <div id="modal-auth" class="modal-card hidden">
+      <div id="modal-auth" class="modal-card modal-scrollable hidden">
         <div class="modal-header">
-          <h2 id="auth-modal-title">Sign In / Account</h2>
+          <h2 id="auth-modal-title">Sign In / Cloud Account</h2>
           <button class="modal-close-btn" data-close>&times;</button>
         </div>
         <div class="modal-body">
           <div id="auth-logged-out" class="auth-view">
-            <p class="auth-intro">Sign in to sync your high scores, win streaks, crowns, and Solitaire statistics across devices.</p>
-            
+            <p class="auth-intro">Sign in with your GitHub or Google account to sync high scores, crowns, puzzles, and rankings across devices.</p>
+
             <button id="btn-github-login" class="oauth-btn oauth-github">
               <svg viewBox="0 0 24 24" class="oauth-icon" fill="currentColor">
                 <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
@@ -419,31 +596,46 @@
               <span>Continue with Google</span>
             </button>
 
-            <!-- Quick GitHub Username Profile -->
+            <!-- Direct In-App GitHub Sign-In -->
             <div class="auth-handle-card">
-              <span class="auth-handle-title">Instant GitHub Profile</span>
+              <span class="auth-handle-title">Quick GitHub Account Sign-In</span>
               <div class="auth-handle-row">
-                <input type="text" id="input-github-username" class="auth-input" placeholder="Enter GitHub username" />
-                <button id="btn-save-username" class="btn-primary auth-mini-btn">Set Profile</button>
+                <input type="text" id="input-github-username" class="auth-input" placeholder="GitHub username (e.g. KhanTheDaleK1)" value="KhanTheDaleK1" />
+                <button id="btn-save-username" class="btn-primary auth-mini-btn">Sign In</button>
               </div>
             </div>
 
-            <!-- Firebase / GitHub OAuth Setup Helper -->
+            <!-- Direct In-App Google Sign-In -->
+            <div class="auth-handle-card">
+              <span class="auth-handle-title">Quick Google Account Sign-In</span>
+              <div class="auth-handle-row">
+                <input type="email" id="input-google-email" class="auth-input" placeholder="Google email (e.g. evan.t.beechem@gmail.com)" value="evan.t.beechem@gmail.com" />
+                <button id="btn-save-google" class="btn-primary auth-mini-btn">Sign In</button>
+              </div>
+            </div>
+
+            <!-- OAuth Server Config Helper -->
             <div id="auth-setup-card" class="auth-setup-card">
               <button id="btn-toggle-oauth-setup" class="text-btn setup-toggle-btn">
-                <span>⚙️ Firebase OAuth Configuration</span>
+                <span>⚙️ Advanced OAuth App Keys (.env)</span>
               </button>
               <div id="oauth-setup-fields" class="oauth-setup-fields hidden">
                 <p class="setup-hint">
-                  To enable GitHub pop-up authentication, register the app in your Firebase Project Console and configure your OAuth App under GitHub Developer Settings:
+                  Optional: Enter OAuth Client IDs &amp; Secrets to use redirect OAuth instead of instant profile lookup:
                 </p>
                 <div class="setup-field-hint">
-                  <span>Firebase Callback URL:</span>
-                  <code id="setup-callback-url">https://&lt;firebase-project-id&gt;.firebaseapp.com/__/auth/handler</code>
+                  <span>GitHub Callback URL:</span>
+                  <code id="setup-callback-url">https://solitaire.beechem.site/api/auth/github/callback</code>
                 </div>
                 <input type="text" id="setup-client-id" class="auth-input" placeholder="GitHub Client ID" />
                 <input type="password" id="setup-client-secret" class="auth-input" placeholder="GitHub Client Secret" />
-                <button id="btn-save-oauth-config" class="btn-primary auth-mini-btn">Save to .env</button>
+                <div class="setup-field-hint">
+                  <span>Google Callback URL:</span>
+                  <code id="setup-google-callback-url">https://solitaire.beechem.site/api/auth/google/callback</code>
+                </div>
+                <input type="text" id="setup-google-client-id" class="auth-input" placeholder="Google Client ID" />
+                <input type="password" id="setup-google-client-secret" class="auth-input" placeholder="Google Client Secret" />
+                <button id="btn-save-oauth-config" class="btn-primary auth-mini-btn">Save OAuth Keys to .env</button>
                 <span id="setup-save-feedback" class="setup-feedback hidden">✓ Credentials saved!</span>
               </div>
             </div>
@@ -466,8 +658,12 @@
 
             <div class="sync-status-box">
               <div class="sync-status-indicator online"></div>
-              <span>Cloud stats synchronized</span>
+              <span id="sync-status-text">Cloud stats synchronized with server</span>
             </div>
+
+            <button id="btn-sync-now" class="btn-secondary">
+              <span>🔄 Sync Cloud Stats Now</span>
+            </button>
 
             <button id="btn-logout" class="oauth-btn oauth-logout">
               <span>Sign Out</span>
@@ -498,7 +694,15 @@
               <span id="v-moves" class="v-val">112</span>
             </div>
           </div>
-          <button id="btn-victory-again" class="btn-primary">Play Another Hand</button>
+
+          <div id="victory-xp-box" class="victory-xp-box">
+            <div class="v-xp-row">
+              <span id="v-xp-earned">+280 ★ XP Earned</span>
+              <span id="v-puzzle-reward">🧩 +1 Puzzle Piece Unlocked!</span>
+            </div>
+          </div>
+
+          <button id="btn-victory-again" class="btn-primary">Play Winning Deal</button>
         </div>
       </div>
     </div>

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'solitare-pwa-v1';
+const CACHE_NAME = 'solitaire-pwa-v3';
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
@@ -27,28 +27,30 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Only handle GET requests and skip Firebase/OAuth network calls from aggressive cache
   if (event.request.method !== 'GET') return;
   const url = new URL(event.request.url);
 
-  // Allow Firebase / OAuth identity endpoints to hit the network directly
-  if (url.hostname.includes('firebaseapp.com') ||
-      url.hostname.includes('googleapis.com') ||
-      url.hostname.includes('github.com')) {
+  // Never intercept API routes or OAuth/Firebase endpoints
+  if (
+    url.pathname.startsWith('/api/') ||
+    url.hostname.includes('firebaseapp.com') ||
+    url.hostname.includes('googleapis.com') ||
+    url.hostname.includes('accounts.google.com') ||
+    url.hostname.includes('github.com') ||
+    url.hostname.includes('githubusercontent.com') ||
+    url.hostname.includes('gravatar.com')
+  ) {
     return;
   }
 
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       if (cachedResponse) {
-        // Fetch in background to update cache (stale-while-revalidate)
         fetch(event.request).then((networkResponse) => {
           if (networkResponse && networkResponse.status === 200) {
             caches.open(CACHE_NAME).then((cache) => cache.put(event.request, networkResponse));
           }
-        }).catch(() => {
-          // Offline, ignore network error
-        });
+        }).catch(() => {});
         return cachedResponse;
       }
 
@@ -62,7 +64,6 @@ self.addEventListener('fetch', (event) => {
         });
         return networkResponse;
       }).catch(() => {
-        // If offline and requesting navigation, return cached root
         if (event.request.mode === 'navigate') {
           return caches.match('/');
         }

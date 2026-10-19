@@ -22,11 +22,21 @@ export interface CardMove {
   from: PileLocation;
   to: PileLocation;
   cardFlipped: boolean;
+  flippedCardId?: string;
   scoreChange: number;
   stockRecycled?: boolean;
 }
 
 export type DrawMode = 1 | 3;
+export type ScoringMode = 'standard' | 'vegas';
+
+export interface LastActionAnimation {
+  type: 'deal' | 'draw' | 'recycle' | 'move' | 'undo';
+  flippedCardIds: string[];
+  movedCardIds: string[];
+  targetPile?: PileLocation;
+  timestamp: number;
+}
 
 export interface GameState {
   stock: Card[];
@@ -41,8 +51,12 @@ export interface GameState {
   isWon: boolean;
   isStarted: boolean;
   drawMode: DrawMode;
+  scoringMode: ScoringMode;
+  isWinningDeal: boolean;
   isDailyChallenge?: boolean;
   dailyDate?: string; // YYYY-MM-DD
+  stockPasses: number;
+  lastAction?: LastActionAnimation;
 }
 
 export interface MonthCrownData {
@@ -58,6 +72,7 @@ export interface MetaProgression {
   piecesCollected: number;
   puzzlesCompleted: number;
   badgesEarned: number;
+  puzzleProgress?: Record<string, number[]>; // puzzleId -> array of unlocked piece indices (0..15)
 }
 
 export interface UserStats {

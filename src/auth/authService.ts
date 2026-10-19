@@ -15,6 +15,7 @@ export interface BackendAuthStatus {
   githubConfigured: boolean;
   googleConfigured: boolean;
   callbackUrl: string;
+  googleCallbackUrl?: string;
 }
 
 export class AuthService {
@@ -64,8 +65,13 @@ export class AuthService {
     const authDomain = import.meta.env.VITE_FIREBASE_AUTH_DOMAIN;
     const projectId = import.meta.env.VITE_FIREBASE_PROJECT_ID;
 
-    // Check if real Firebase credentials are provided
-    if (apiKey && apiKey !== 'your_firebase_api_key' && projectId && projectId !== 'solitare-your-project') {
+    if (
+      apiKey &&
+      apiKey !== 'your_firebase_api_key' &&
+      projectId &&
+      projectId !== 'solitaire-your-project' &&
+      projectId !== 'solitare-your-project'
+    ) {
       try {
         const firebaseConfig = {
           apiKey,
@@ -97,7 +103,7 @@ export class AuthService {
         });
         return;
       } catch (err) {
-        console.warn('Firebase init error, using direct/guest mode:', err);
+        console.warn('Firebase init error, using direct backend OAuth:', err);
       }
     }
 
@@ -127,26 +133,80 @@ export class AuthService {
         return await res.json();
       }
     } catch {
-      // Fallback
+      // Fallback when offline
     }
     return {
       githubConfigured: false,
       googleConfigured: false,
-      callbackUrl: `${window.location.origin}/api/auth/github/callback`
+      callbackUrl: `${window.location.origin}/api/auth/github/callback`,
+      googleCallbackUrl: `${window.location.origin}/api/auth/google/callback`
     };
   }
 
-  public async saveBackendCredentials(clientId: string, clientSecret: string): Promise<boolean> {
+  public async saveBackendCredentials(config: {
+    githubClientId?: string;
+    githubClientSecret?: string;
+    googleClientId?: string;
+    googleClientSecret?: string;
+  }): Promise<boolean> {
     const res = await fetch('/api/auth/configure', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        githubClientId: clientId,
-        githubClientSecret: clientSecret
-      })
+      body: JSON.stringify(config)
     });
     const data = await res.json();
     return Boolean(data.success);
+  }
+
+  private openOAuthPopup(url: string, windowName: string): Promise<AuthUser> {
+    return new Promise((resolve, reject) => {
+      const width = 480;
+      const height = 620;
+      const left = Math.max(0, (window.screen.width - width) / 2);
+      const top = Math.max(0, (window.screen.height - height) / 2);
+      const popup = window.open(
+        url,
+        windowName,
+        `width=${width},height=${height},left=${left},top=${top},scrollbars=yes,resizable=yes`
+      );
+
+      if (!popup) {
+        // Fallback if popup is blocked on mobile PWA standalone mode
+        window.location.href = url;
+        return;
+      }
+
+      let resolved = false;
+      const handler = (event: MessageEvent) => {
+        if (event.data?.type === 'SOLITAIRE_AUTH_SUCCESS' && event.data.user) {
+          resolved = true;
+          clearInterval(checkInterval);
+          window.removeEventListener('message', handler);
+          this.currentUser = event.data.user;
+          this.saveAuthUser(this.currentUser);
+          this.notifySubscribers();
+          resolve(this.currentUser!);
+        }
+      };
+
+      window.addEventListener('message', handler);
+
+      const checkInterval = setInterval(() => {
+        if (popup.closed) {
+          clearInterval(checkInterval);
+          window.removeEventListener('message', handler);
+          if (!resolved) {
+            this.loadSavedUser();
+            if (this.currentUser) {
+              this.notifySubscribers();
+              resolve(this.currentUser);
+            } else {
+              reject(new Error('POPUP_CLOSED'));
+            }
+          }
+        }
+      }, 400);
+    });
   }
 
   public async signInGoogle(): Promise<AuthUser> {
@@ -168,11 +228,10 @@ export class AuthService {
       return this.currentUser;
     }
 
-    throw new Error('Google Sign-In requires Firebase credentials to be configured in .env.');
+    return this.openOAuthPopup('/api/auth/google', 'solitaire_google_oauth');
   }
 
   public async signInGitHub(): Promise<AuthUser> {
-    // 1. Try Firebase if explicitly configured
     if (this.isFirebaseConfigured && this.auth) {
       const provider = new GithubAuthProvider();
       provider.addScope('read:user');
@@ -190,55 +249,92 @@ export class AuthService {
       return this.currentUser;
     }
 
-    // 2. Direct server-side GitHub OAuth
-    const status = await this.getBackendStatus();
-    if (!status.githubConfigured) {
-      throw new Error('CONFIG_NEEDED');
-    }
-
-    return new Promise((resolve, reject) => {
-      const popup = window.open('/api/auth/github', 'solitaire_oauth', 'width=600,height=700,scrollbars=yes');
-      if (!popup) {
-        reject(new Error('Popup blocked. Please allow popups for this site.'));
-        return;
-      }
-
-      const handler = (event: MessageEvent) => {
-        if (event.data?.type === 'SOLITAIRE_AUTH_SUCCESS' && event.data.user) {
-          window.removeEventListener('message', handler);
-          this.currentUser = event.data.user;
-          this.saveAuthUser(this.currentUser);
-          this.notifySubscribers();
-          resolve(this.currentUser!);
-        }
-      };
-
-      window.addEventListener('message', handler);
-
-      const checkInterval = setInterval(() => {
-        if (popup.closed) {
-          clearInterval(checkInterval);
-          window.removeEventListener('message', handler);
-          if (this.currentUser) {
-            resolve(this.currentUser);
-          } else {
-            reject(new Error('Sign-in cancelled or window closed.'));
-          }
-        }
-      }, 500);
-    });
+    return this.openOAuthPopup('/api/auth/github', 'solitaire_github_oauth');
   }
 
-  public signInWithUsername(username: string): AuthUser {
+  public async signInWithUsername(username: string): Promise<AuthUser> {
     const trimmed = username.trim().replace(/^@/, '');
-    if (!trimmed) throw new Error('Please enter a username.');
+    if (!trimmed) throw new Error('Please enter a GitHub username.');
+
+    try {
+      const res = await fetch(`/api/auth/github/profile?username=${encodeURIComponent(trimmed)}`);
+      if (res.ok) {
+        const data = await res.json();
+        if (data.user) {
+          this.currentUser = data.user;
+          this.saveAuthUser(this.currentUser);
+          this.notifySubscribers();
+          return this.currentUser!;
+        }
+      }
+    } catch {
+      // Offline or direct fallback
+    }
+
+    // Direct GitHub public API fallback from browser
+    try {
+      const ghRes = await fetch(`https://api.github.com/users/${encodeURIComponent(trimmed)}`);
+      if (ghRes.ok) {
+        const ghUser = await ghRes.json();
+        this.currentUser = {
+          uid: `gh_${ghUser.id || ghUser.login.toLowerCase()}`,
+          displayName: ghUser.name || ghUser.login,
+          email: ghUser.email || `${ghUser.login}@users.noreply.github.com`,
+          photoURL: ghUser.avatar_url || `https://github.com/${encodeURIComponent(ghUser.login)}.png`,
+          provider: 'github'
+        };
+        this.saveAuthUser(this.currentUser);
+        this.notifySubscribers();
+        return this.currentUser;
+      }
+    } catch {
+      // Ignore network error
+    }
 
     this.currentUser = {
-      uid: `gh_${trimmed}`,
+      uid: `gh_${trimmed.toLowerCase()}`,
       displayName: trimmed,
       email: `${trimmed}@users.noreply.github.com`,
       photoURL: `https://github.com/${encodeURIComponent(trimmed)}.png`,
       provider: 'github'
+    };
+    this.saveAuthUser(this.currentUser);
+    this.notifySubscribers();
+    return this.currentUser;
+  }
+
+  public async signInWithGoogleProfile(email: string, name?: string): Promise<AuthUser> {
+    const cleanEmail = email.trim().toLowerCase();
+    if (!cleanEmail || !cleanEmail.includes('@')) {
+      throw new Error('Please enter a valid Google email address.');
+    }
+
+    try {
+      const res = await fetch('/api/auth/google/profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: cleanEmail, name: name?.trim() || '' })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        if (data.user) {
+          this.currentUser = data.user;
+          this.saveAuthUser(this.currentUser);
+          this.notifySubscribers();
+          return this.currentUser!;
+        }
+      }
+    } catch {
+      // Offline fallback
+    }
+
+    const displayName = name?.trim() || cleanEmail.split('@')[0];
+    this.currentUser = {
+      uid: `google_${cleanEmail.replace(/[^a-z0-9]/g, '_')}`,
+      displayName,
+      email: cleanEmail,
+      photoURL: `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=4285F4&color=fff&bold=true`,
+      provider: 'google'
     };
     this.saveAuthUser(this.currentUser);
     this.notifySubscribers();
