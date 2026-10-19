@@ -64,28 +64,69 @@ export class SoundManager {
     this.vibrate(18);
     if (!this.soundEnabled || !this.ctx) return;
     try {
+      // Woodblock click
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
 
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(180, this.ctx.currentTime);
-      osc.frequency.exponentialRampToValueAtTime(80, this.ctx.currentTime + 0.06);
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(1200, this.ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(180, this.ctx.currentTime + 0.04);
 
-      gain.gain.setValueAtTime(0.3, this.ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.06);
+      gain.gain.setValueAtTime(0.35, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.04);
 
       osc.connect(gain);
       gain.connect(this.ctx.destination);
 
       osc.start();
-      osc.stop(this.ctx.currentTime + 0.06);
+      osc.stop(this.ctx.currentTime + 0.04);
+    } catch {
+      // Fallback
+    }
+  }
+
+  public playFoundationPlaced(): void {
+    this.vibrate([15, 30, 20]);
+    if (!this.soundEnabled || !this.ctx) return;
+    try {
+      // Ascending pentatonic chime (C5 -> E5 -> G5)
+      const freqs = [523.25, 659.25, 783.99];
+      freqs.forEach((freq, idx) => {
+        if (!this.ctx) return;
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        const start = this.ctx.currentTime + idx * 0.06;
+
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(freq, start);
+
+        gain.gain.setValueAtTime(0.25, start);
+        gain.gain.exponentialRampToValueAtTime(0.01, start + 0.18);
+
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.start(start);
+        osc.stop(start + 0.18);
+      });
     } catch {
       // Fallback
     }
   }
 
   public playInvalid(): void {
-    this.vibrate([20, 40, 20]);
+    this.vibrate([25, 45, 25]);
+
+    // Visual flash haptic
+    try {
+      document.body.classList.add('flash-invalid');
+      setTimeout(() => {
+        document.body.classList.remove('flash-invalid');
+      }, 90);
+    } catch {
+      // Ignore
+    }
+
     if (!this.soundEnabled || !this.ctx) return;
     try {
       const osc = this.ctx.createOscillator();
@@ -93,16 +134,16 @@ export class SoundManager {
 
       osc.type = 'sawtooth';
       osc.frequency.setValueAtTime(140, this.ctx.currentTime);
-      osc.frequency.setValueAtTime(110, this.ctx.currentTime + 0.08);
+      osc.frequency.setValueAtTime(80, this.ctx.currentTime + 0.08);
 
-      gain.gain.setValueAtTime(0.15, this.ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.16);
+      gain.gain.setValueAtTime(0.18, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.12);
 
       osc.connect(gain);
       gain.connect(this.ctx.destination);
 
       osc.start();
-      osc.stop(this.ctx.currentTime + 0.16);
+      osc.stop(this.ctx.currentTime + 0.12);
     } catch {
       // Fallback
     }
@@ -131,6 +172,30 @@ export class SoundManager {
         osc.start(startTime);
         osc.stop(startTime + 0.35);
       });
+    } catch {
+      // Fallback
+    }
+  }
+
+  public playBounceChime(pitchIdx: number = 0): void {
+    if (!this.soundEnabled || !this.ctx) return;
+    try {
+      const pentatonic = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50];
+      const freq = pentatonic[pitchIdx % pentatonic.length];
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+
+      gain.gain.setValueAtTime(0.12, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.1);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start();
+      osc.stop(this.ctx.currentTime + 0.1);
     } catch {
       // Fallback
     }

@@ -156,7 +156,12 @@ export class DragDropManager {
     if (!session.hasMoved) {
       const moved = this.engine.tryAutoMove(session.cards[0], session.from);
       if (moved) {
-        this.sound.playCardPlace();
+        const last = this.engine.state.history[this.engine.state.history.length - 1];
+        if (last && last.to.type === 'foundation') {
+          this.sound.playFoundationPlaced();
+        } else {
+          this.sound.playCardPlace();
+        }
       } else {
         this.sound.playInvalid();
       }
@@ -190,7 +195,11 @@ export class DragDropManager {
     if (targetPileLocation) {
       const success = this.engine.moveCards(session.cards, session.from, targetPileLocation);
       if (success) {
-        this.sound.playCardPlace();
+        if (targetPileLocation.type === 'foundation') {
+          this.sound.playFoundationPlaced();
+        } else {
+          this.sound.playCardPlace();
+        }
         return;
       }
     }

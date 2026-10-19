@@ -19,10 +19,13 @@ export class WinAnimator {
   private activeBouncers: BouncingCard[] = [];
   private cardQueue: { card: Card; startX: number; startY: number }[] = [];
   private isRunning: boolean = false;
+  private onBounce?: (pitchIdx: number) => void;
+  private bounceCount: number = 0;
 
-  constructor(canvas: HTMLCanvasElement) {
+  constructor(canvas: HTMLCanvasElement, onBounce?: (pitchIdx: number) => void) {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
+    this.onBounce = onBounce;
   }
 
   public resize(): void {
@@ -41,11 +44,12 @@ export class WinAnimator {
     this.canvas.classList.remove('hidden');
     this.resize();
     this.isRunning = true;
+    this.bounceCount = 0;
 
     // Trigger celebratory confetti burst
     this.triggerConfetti();
 
-    // Collect cards from foundation top-down
+    // Collect cards from foundation top-down (Kings down to Aces)
     this.cardQueue = [];
     for (let rank = 13; rank >= 1; rank--) {
       for (let f = 0; f < 4; f++) {
@@ -112,15 +116,17 @@ export class WinAnimator {
   private loop = (): void => {
     if (!this.isRunning || !this.ctx) return;
 
+    // 2D kinematic loop: x_{t+1} = x_t + v_x, y_{t+1} = y_t + v_y, v_y = v_y + g
+    // With floor restitution e = -0.75
     const gravity = 0.5;
-    const bounce = 0.82;
+    const restitution = 0.75;
     const screenW = window.innerWidth;
     const screenH = window.innerHeight;
 
     for (let i = this.activeBouncers.length - 1; i >= 0; i--) {
       const b = this.activeBouncers[i];
 
-      // Draw the card at its current position (without clearing previous frames, making classic ribbon trails)
+      // Draw the card without clearing buffer (creating classic trail painting waterfall effect)
       this.drawCard(b);
 
       b.x += b.dx;
@@ -130,9 +136,13 @@ export class WinAnimator {
       // Bounce off floor
       if (b.y + b.height >= screenH) {
         b.y = screenH - b.height;
-        b.dy = -b.dy * bounce;
+        b.dy = -b.dy * restitution;
 
-        // Launch next card on first bounce
+        // Trigger arpeggio chime synced to bounce
+        this.bounceCount++;
+        this.onBounce?.(this.bounceCount);
+
+        // Launch next card on bounce
         if (this.cardQueue.length > 0 && this.activeBouncers.length < 6) {
           this.launchNextCard();
         }
@@ -156,18 +166,26 @@ export class WinAnimator {
     if (!this.ctx) return;
     const { x, y, width, height, card } = b;
     const radius = 6;
-    const color = getSuitColor(card.suit) === 'red' ? '#dc2626' : '#0f172a';
+    // MobilityWare color palette: #e60000 crimson, #121212 deep onyx
+    const color = getSuitColor(card.suit) === 'red' ? '#e60000' : '#121212';
 
     this.ctx.save();
-    // Card background & shadow
-    this.ctx.fillStyle = '#ffffff';
-    this.ctx.strokeStyle = '#94a3b8';
+    // Card stock: #F8F9FA with drop shadow #1A1A1A
+    this.ctx.shadowColor = 'rgba(26, 26, 26, 0.4)';
+    this.ctx.shadowBlur = 4;
+    this.ctx.shadowOffsetY = 2;
+
+    this.ctx.fillStyle = '#f8f9fa';
+    this.ctx.strokeStyle = '#d1d5db';
     this.ctx.lineWidth = 1;
 
     this.ctx.beginPath();
     this.ctx.roundRect(x, y, width, height, radius);
     this.ctx.fill();
     this.ctx.stroke();
+
+    // Reset shadow for text rendering
+    this.ctx.shadowColor = 'transparent';
 
     // Corner label & suit
     this.ctx.fillStyle = color;

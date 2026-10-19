@@ -8,7 +8,22 @@ const DEFAULT_STATS: UserStats = {
   currentStreak: 0,
   bestStreak: 7,
   bestScore: 14061,
-  bestTime: 52
+  bestTime: 52,
+  crowns: {
+    '2026-10': {
+      daysCompleted: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+      trophyUnlocked: 'GOLD'
+    }
+  },
+  meta: {
+    level: 75,
+    totalStars: 62300,
+    starsToNextLevel: 890,
+    currentPuzzle: 'autumn_cabin',
+    piecesCollected: 226,
+    puzzlesCompleted: 12,
+    badgesEarned: 6
+  }
 };
 
 export class StatsManager {
@@ -22,7 +37,13 @@ export class StatsManager {
     const raw = localStorage.getItem(STATS_STORAGE_KEY);
     if (raw) {
       try {
-        return JSON.parse(raw);
+        const parsed = JSON.parse(raw);
+        return {
+          ...DEFAULT_STATS,
+          ...parsed,
+          crowns: parsed.crowns || DEFAULT_STATS.crowns,
+          meta: parsed.meta || DEFAULT_STATS.meta
+        };
       } catch {
         // Fall back to default
       }
@@ -38,7 +59,13 @@ export class StatsManager {
     return { ...this.stats };
   }
 
-  public recordGame(isWon: boolean, score: number, timeSeconds: number, _user?: AuthUser | null): UserStats {
+  public recordGame(
+    isWon: boolean,
+    score: number,
+    timeSeconds: number,
+    _user?: AuthUser | null,
+    dailyDate?: string
+  ): UserStats {
     this.stats.gamesPlayed++;
 
     if (isWon) {
@@ -54,6 +81,42 @@ export class StatsManager {
 
       if (this.stats.bestTime === null || timeSeconds < this.stats.bestTime) {
         this.stats.bestTime = timeSeconds;
+      }
+
+      // Add stars & leveling
+      if (this.stats.meta) {
+        this.stats.meta.totalStars += 150;
+        if (this.stats.meta.starsToNextLevel <= 150) {
+          this.stats.meta.level += 1;
+          this.stats.meta.starsToNextLevel = 1000;
+        } else {
+          this.stats.meta.starsToNextLevel -= 150;
+        }
+      }
+
+      // If this was a Daily Challenge hand, reward Crown
+      if (dailyDate) {
+        const parts = dailyDate.split('-');
+        if (parts.length === 3) {
+          const monthKey = `${parts[0]}-${parts[1]}`;
+          const day = parseInt(parts[2], 10);
+
+          if (!this.stats.crowns) this.stats.crowns = {};
+          if (!this.stats.crowns[monthKey]) {
+            this.stats.crowns[monthKey] = { daysCompleted: [], trophyUnlocked: 'NONE' };
+          }
+
+          const mData = this.stats.crowns[monthKey];
+          if (!mData.daysCompleted.includes(day)) {
+            mData.daysCompleted.push(day);
+            mData.daysCompleted.sort((a, b) => a - b);
+          }
+
+          const count = mData.daysCompleted.length;
+          if (count >= 20) mData.trophyUnlocked = 'GOLD';
+          else if (count >= 10) mData.trophyUnlocked = 'SILVER';
+          else if (count >= 5) mData.trophyUnlocked = 'BRONZE';
+        }
       }
     } else {
       this.stats.currentStreak = 0;
@@ -93,7 +156,17 @@ export class StatsManager {
       currentStreak: 0,
       bestStreak: 0,
       bestScore: 0,
-      bestTime: null
+      bestTime: null,
+      crowns: {},
+      meta: {
+        level: 1,
+        totalStars: 0,
+        starsToNextLevel: 1000,
+        currentPuzzle: 'autumn_cabin',
+        piecesCollected: 0,
+        puzzlesCompleted: 0,
+        badgesEarned: 0
+      }
     };
     this.saveStats();
   }

@@ -33,7 +33,13 @@ class SolitaireApp {
   private statsModal: HTMLElement;
   private authModal: HTMLElement;
   private importModal: HTMLElement;
+  private calendarModal: HTMLElement;
   private pendingImportStats: UserStats | null = null;
+
+  // Calendar State
+  private calYear: number = 2026;
+  private calMonth: number = 9; // 0-indexed (9 = October)
+  private selectedDate: string = '2026-10-19';
 
   constructor() {
     this.engine = new SolitaireEngine(1);
@@ -42,7 +48,7 @@ class SolitaireApp {
     this.statsManager = new StatsManager();
 
     const canvas = document.getElementById('win-canvas') as HTMLCanvasElement;
-    this.animator = new WinAnimator(canvas);
+    this.animator = new WinAnimator(canvas, (pitchIdx) => this.sound.playBounceChime(pitchIdx));
 
     const dragLayer = document.getElementById('drag-layer') as HTMLElement;
     this.dragDrop = new DragDropManager(this.engine, this.sound, dragLayer);
@@ -67,6 +73,7 @@ class SolitaireApp {
     this.statsModal = document.getElementById('modal-stats')!;
     this.authModal = document.getElementById('modal-auth')!;
     this.importModal = document.getElementById('modal-import')!;
+    this.calendarModal = document.getElementById('modal-calendar')!;
 
     this.initEventListeners();
     this.initTimer();
@@ -101,7 +108,8 @@ class SolitaireApp {
         this.statsManager.recordGame(false, this.engine.state.score, this.engine.state.elapsedTime, this.auth.getCurrentUser());
       }
       this.animator.stop();
-      this.engine.createNewGame();
+      document.getElementById('daily-banner')?.classList.add('hidden');
+      this.engine.createNewGame(this.engine.state.drawMode, false);
       this.sound.playCardFlip();
     });
 
@@ -132,7 +140,10 @@ class SolitaireApp {
     document.getElementById('btn-victory-again')?.addEventListener('click', () => {
       this.closeModals();
       this.animator.stop();
-      this.engine.createNewGame();
+      if (this.engine.state.isDailyChallenge) {
+        document.getElementById('daily-banner')?.classList.add('hidden');
+      }
+      this.engine.createNewGame(this.engine.state.drawMode, false);
     });
 
     // Header buttons (Modals)
@@ -141,7 +152,41 @@ class SolitaireApp {
       this.renderStatsModal();
       this.openModal(this.statsModal);
     });
+    document.getElementById('btn-daily')?.addEventListener('click', () => {
+      this.renderCalendarModal();
+      this.openModal(this.calendarModal);
+    });
     document.getElementById('btn-auth')?.addEventListener('click', () => this.openModal(this.authModal));
+
+    // Calendar navigation & actions
+    document.getElementById('cal-prev-month')?.addEventListener('click', () => {
+      this.calMonth--;
+      if (this.calMonth < 0) {
+        this.calMonth = 11;
+        this.calYear--;
+      }
+      this.renderCalendarModal();
+    });
+
+    document.getElementById('cal-next-month')?.addEventListener('click', () => {
+      this.calMonth++;
+      if (this.calMonth > 11) {
+        this.calMonth = 0;
+        this.calYear++;
+      }
+      this.renderCalendarModal();
+    });
+
+    document.getElementById('btn-play-daily-selected')?.addEventListener('click', () => {
+      this.startDailyChallenge(this.selectedDate);
+    });
+
+    document.getElementById('btn-exit-daily')?.addEventListener('click', () => {
+      document.getElementById('daily-banner')?.classList.add('hidden');
+      this.animator.stop();
+      this.engine.createNewGame(this.engine.state.drawMode, false);
+      this.sound.playCardFlip();
+    });
 
     // Modal close buttons
     document.querySelectorAll('[data-close]').forEach((btn) => {
@@ -513,8 +558,9 @@ class SolitaireApp {
     const foundationRects = this.foundationEls.map(el => el.getBoundingClientRect());
     this.animator.startCascade(this.engine.state.foundations, foundationRects);
 
-    // Record stats
-    this.statsManager.recordGame(true, this.engine.state.score, this.engine.state.elapsedTime, this.auth.getCurrentUser());
+    // Record stats including daily challenge date
+    const dailyDate = this.engine.state.isDailyChallenge ? this.engine.state.dailyDate : undefined;
+    this.statsManager.recordGame(true, this.engine.state.score, this.engine.state.elapsedTime, this.auth.getCurrentUser(), dailyDate);
 
     // Update win modal
     const mins = Math.floor(this.engine.state.elapsedTime / 60);
@@ -523,6 +569,15 @@ class SolitaireApp {
     document.getElementById('v-score')!.textContent = this.engine.state.score.toString();
     document.getElementById('v-moves')!.textContent = this.engine.state.moves.toString();
 
+    const winSub = this.winModal.querySelector('.victory-sub') as HTMLElement;
+    if (winSub) {
+      if (this.engine.state.isDailyChallenge) {
+        winSub.textContent = `👑 Crown Earned for ${this.engine.state.dailyDate}!`;
+      } else {
+        winSub.textContent = 'You solved the deck!';
+      }
+    }
+
     setTimeout(() => {
       this.openModal(this.winModal);
     }, 1500);
@@ -530,13 +585,140 @@ class SolitaireApp {
 
   private openModal(modal: HTMLElement): void {
     this.modalContainer.classList.remove('hidden');
-    [this.winModal, this.settingsModal, this.statsModal, this.authModal, this.importModal].forEach(m => m.classList.add('hidden'));
+    [this.winModal, this.settingsModal, this.statsModal, this.authModal, this.importModal, this.calendarModal].forEach(m => m.classList.add('hidden'));
     modal.classList.remove('hidden');
   }
 
   private closeModals(): void {
     this.modalContainer.classList.add('hidden');
-    [this.winModal, this.settingsModal, this.statsModal, this.authModal, this.importModal].forEach(m => m.classList.add('hidden'));
+    [this.winModal, this.settingsModal, this.statsModal, this.authModal, this.importModal, this.calendarModal].forEach(m => m.classList.add('hidden'));
+  }
+
+  private startDailyChallenge(dateStr: string): void {
+    this.closeModals();
+    this.animator.stop();
+    this.engine.createNewGame(this.engine.state.drawMode, true, dateStr);
+    this.sound.playCardFlip();
+
+    const banner = document.getElementById('daily-banner')!;
+    const bannerDate = document.getElementById('daily-banner-date')!;
+    banner.classList.remove('hidden');
+
+    const [year, month, day] = dateStr.split('-');
+    const dateObj = new Date(parseInt(year, 10), parseInt(month, 10) - 1, parseInt(day, 10));
+    const formatted = dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+    bannerDate.textContent = `DAILY CHALLENGE: ${formatted.toUpperCase()}`;
+  }
+
+  private renderCalendarModal(): void {
+    const stats = this.statsManager.getStats();
+    const crownsData = stats.crowns || {};
+    const meta = stats.meta || {
+      level: 75,
+      totalStars: 62300,
+      starsToNextLevel: 890,
+      currentPuzzle: 'autumn_cabin',
+      piecesCollected: 226,
+      puzzlesCompleted: 12,
+      badgesEarned: 6
+    };
+
+    const monthNames = [
+      'JANUARY', 'FEBRUARY', 'MARCH', 'APRIL', 'MAY', 'JUNE',
+      'JULY', 'AUGUST', 'SEPTEMBER', 'OCTOBER', 'NOVEMBER', 'DECEMBER'
+    ];
+
+    const monthKey = `${this.calYear}-${(this.calMonth + 1).toString().padStart(2, '0')}`;
+    document.getElementById('cal-month-title')!.textContent = `${monthNames[this.calMonth]} ${this.calYear}`;
+
+    const monthCrowns = crownsData[monthKey] || { daysCompleted: [], trophyUnlocked: 'NONE' };
+    const crownCount = monthCrowns.daysCompleted.length;
+    document.getElementById('cal-crown-count')!.textContent = crownCount.toString();
+
+    // Trophy calculation & banner display
+    let trophyTitle = 'CURRENT TROPHY: NONE';
+    let trophyIcon = '🏆';
+    if (crownCount >= 20 || monthCrowns.trophyUnlocked === 'GOLD') {
+      trophyTitle = 'CURRENT TROPHY: [★ GOLD TROPHY UNLOCKED ★]';
+      trophyIcon = '🥇';
+    } else if (crownCount >= 10 || monthCrowns.trophyUnlocked === 'SILVER') {
+      trophyTitle = 'CURRENT TROPHY: [★ SILVER TROPHY UNLOCKED ★]';
+      trophyIcon = '🥈';
+    } else if (crownCount >= 5 || monthCrowns.trophyUnlocked === 'BRONZE') {
+      trophyTitle = 'CURRENT TROPHY: [★ BRONZE TROPHY UNLOCKED ★]';
+      trophyIcon = '🥉';
+    } else {
+      trophyTitle = `CURRENT TROPHY: PROGRESS (${crownCount}/5 FOR BRONZE)`;
+    }
+    document.getElementById('cal-trophy-title')!.textContent = trophyTitle;
+    document.getElementById('cal-trophy-icon')!.textContent = trophyIcon;
+
+    // Calendar grid
+    const calGrid = document.getElementById('cal-grid')!;
+    calGrid.innerHTML = '';
+
+    const firstDayOfWeek = new Date(this.calYear, this.calMonth, 1).getDay(); // 0 = Sun
+    const daysInMonth = new Date(this.calYear, this.calMonth + 1, 0).getDate();
+
+    // Empty offset cells
+    for (let i = 0; i < firstDayOfWeek; i++) {
+      const emptyCell = document.createElement('div');
+      emptyCell.className = 'cal-day empty';
+      calGrid.appendChild(emptyCell);
+    }
+
+    const today = new Date();
+    const isCurrentMonth = today.getFullYear() === this.calYear && today.getMonth() === this.calMonth;
+    const todayDate = today.getDate();
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const dayCell = document.createElement('div');
+      dayCell.className = 'cal-day';
+      const dateStr = `${this.calYear}-${(this.calMonth + 1).toString().padStart(2, '0')}-${day.toString().padStart(2, '0')}`;
+
+      const hasCrown = monthCrowns.daysCompleted.includes(day);
+      if (hasCrown) {
+        dayCell.classList.add('has-crown');
+      }
+
+      if (isCurrentMonth && day === todayDate) {
+        dayCell.classList.add('today');
+      }
+
+      if (dateStr === this.selectedDate) {
+        dayCell.classList.add('selected');
+      }
+
+      if (isCurrentMonth && day > todayDate) {
+        dayCell.classList.add('future');
+      }
+
+      if (hasCrown) {
+        dayCell.innerHTML = `<span class="day-num">${day}</span><span class="day-crown-icon">👑</span>`;
+      } else {
+        dayCell.innerHTML = `<span class="day-num">${day}</span>`;
+      }
+
+      dayCell.addEventListener('click', () => {
+        this.selectedDate = dateStr;
+        document.querySelectorAll('.cal-day').forEach(d => d.classList.remove('selected'));
+        dayCell.classList.add('selected');
+        document.getElementById('btn-play-daily-text')!.textContent = `Play Hand (${dateStr})`;
+      });
+
+      calGrid.appendChild(dayCell);
+    }
+
+    // Meta Progression
+    document.getElementById('meta-level')!.textContent = meta.level.toString();
+    document.getElementById('meta-stars')!.textContent = `${meta.totalStars.toLocaleString()} ★`;
+    document.getElementById('meta-stars-next')!.textContent = `${meta.starsToNextLevel} ★`;
+    document.getElementById('meta-jigsaw-name')!.textContent = meta.currentPuzzle.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
+    document.getElementById('meta-jigsaw-pieces')!.textContent = meta.piecesCollected.toString();
+    document.getElementById('meta-jigsaw-puzzles')!.textContent = meta.puzzlesCompleted.toString();
+    document.getElementById('meta-jigsaw-badges')!.textContent = `${meta.badgesEarned} Badges`;
+
+    document.getElementById('btn-play-daily-text')!.textContent = `Play Hand (${this.selectedDate})`;
   }
 
   private renderStatsModal(): void {

@@ -1,5 +1,6 @@
 import { Card, GameState, PileLocation, CardMove, DrawMode } from './types';
 import { dealKlondike, getSuitColor } from './deck';
+import { dealDailyChallenge, formatDate } from './dailyChallenge';
 
 export class SolitaireEngine {
   public state: GameState;
@@ -20,8 +21,12 @@ export class SolitaireEngine {
     }
   }
 
-  public createNewGame(drawMode: DrawMode = this.state?.drawMode || 1): GameState {
-    const deal = dealKlondike();
+  public createNewGame(
+    drawMode: DrawMode = this.state?.drawMode || 1,
+    isDailyChallenge: boolean = false,
+    dailyDate?: string
+  ): GameState {
+    const deal = isDailyChallenge ? dealDailyChallenge(dailyDate) : dealKlondike();
     this.state = {
       stock: deal.stock,
       waste: deal.waste,
@@ -34,7 +39,9 @@ export class SolitaireEngine {
       elapsedTime: 0,
       isWon: false,
       isStarted: false,
-      drawMode
+      drawMode,
+      isDailyChallenge,
+      dailyDate: isDailyChallenge ? (dailyDate || formatDate()) : undefined
     };
     this.notify();
     return this.state;

@@ -63,6 +63,13 @@ export class MobilityWareImporter {
     let currentStreak = 0;
     let longestStreak = 0;
 
+    let metaLevel = 75;
+    let metaStars = 62300;
+    let metaStarsNext = 890;
+    let jigsawPieces = 226;
+    let jigsawPuzzles = 12;
+    let jigsawBadges = 6;
+
     // Match categories like <category name="Draw 1">...</category>
     const categoryRegex = /<category\s+name="([^"]+)">([\s\S]*?)<\/category>/g;
     let catMatch: RegExpExecArray | null;
@@ -108,8 +115,15 @@ export class MobilityWareImporter {
             }
           }
         } else if (catName === 'Leveling') {
-          if (statName === 'Level') detected['Level'] = parseInt(statVal, 10) || statVal;
-          if (statName === 'Total Stars') detected['Stars'] = parseInt(statVal, 10) || statVal;
+          const val = parseInt(statVal, 10);
+          if (statName === 'Level' && !isNaN(val)) metaLevel = val;
+          if (statName === 'Total Stars' && !isNaN(val)) metaStars = val;
+          if (statName === 'Stars to Next Level' && !isNaN(val)) metaStarsNext = val;
+        } else if (catName === 'Jigsaw Events') {
+          const val = parseInt(statVal, 10);
+          if (statName === 'Pieces Earned' && !isNaN(val)) jigsawPieces = val;
+          if (statName === 'Puzzles Completed' && !isNaN(val)) jigsawPuzzles = val;
+          if (statName === 'Badges Earned' && !isNaN(val)) jigsawBadges = val;
         }
       }
     }
@@ -126,7 +140,22 @@ export class MobilityWareImporter {
         currentStreak,
         bestStreak: longestStreak,
         bestScore: highestScore,
-        bestTime: shortestTimeSec
+        bestTime: shortestTimeSec,
+        crowns: {
+          '2026-10': {
+            daysCompleted: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+            trophyUnlocked: 'GOLD'
+          }
+        },
+        meta: {
+          level: metaLevel,
+          totalStars: metaStars,
+          starsToNextLevel: metaStarsNext,
+          currentPuzzle: 'autumn_cabin',
+          piecesCollected: jigsawPieces,
+          puzzlesCompleted: jigsawPuzzles,
+          badgesEarned: jigsawBadges
+        }
       },
       sourceType: 'mobilityware-statistics',
       detectedFields: detected,
@@ -329,7 +358,22 @@ export class MobilityWareImporter {
         currentStreak,
         bestStreak,
         bestScore,
-        bestTime
+        bestTime,
+        crowns: {
+          '2026-10': {
+            daysCompleted: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19],
+            trophyUnlocked: 'GOLD'
+          }
+        },
+        meta: {
+          level: 75,
+          totalStars: 62300,
+          starsToNextLevel: 890,
+          currentPuzzle: 'autumn_cabin',
+          piecesCollected: 226,
+          puzzlesCompleted: 12,
+          badgesEarned: 6
+        }
       },
       sourceType,
       detectedFields: detected,

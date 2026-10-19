@@ -38,6 +38,9 @@
           <button id="btn-stats" class="icon-btn" aria-label="Statistics" title="Statistics">
             <svg viewBox="0 0 24 24" class="icon"><path fill="currentColor" d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V5h14v14zM7 10h2v7H7zm4-3h2v10h-2zm4 6h2v4h-2z"/></svg>
           </button>
+          <button id="btn-daily" class="icon-btn btn-crown" aria-label="Daily Challenges & Crowns" title="Daily Challenges">
+            <svg viewBox="0 0 24 24" class="icon crown-svg"><path fill="currentColor" d="M5 16L3 5l5.5 5L12 4l3.5 6L21 5l-2 11H5zm14 3c0 .55-.45 1-1 1H6c-.55 0-1-.45-1-1v-1h14v1z"/></svg>
+          </button>
         </div>
 
         <div class="header-stats">
@@ -65,6 +68,11 @@
           </button>
         </div>
       </header>
+      <div id="daily-banner" class="daily-banner hidden">
+        <span class="crown-banner-icon">👑</span>
+        <span id="daily-banner-date" class="daily-banner-text">DAILY CHALLENGE: OCTOBER 19, 2026</span>
+        <button id="btn-exit-daily" class="daily-banner-close" title="Exit Daily Challenge and play random deal">✕</button>
+      </div>
 
       <!-- Main Playfield -->
       <main id="playfield" class="playfield">
@@ -197,6 +205,76 @@
         </div>
       </div>
 
+      <!-- Daily Challenge & Crown Calendar Modal -->
+      <div id="modal-calendar" class="modal-card modal-calendar-card hidden">
+        <div class="modal-header">
+          <div class="calendar-header-title">
+            <span class="crown-badge-header">👑</span>
+            <h2>Daily Challenges</h2>
+          </div>
+          <button class="modal-close-btn" data-close>&times;</button>
+        </div>
+        <div class="modal-body">
+          <!-- Month Navigation -->
+          <div class="cal-nav">
+            <button id="cal-prev-month" class="cal-nav-btn" aria-label="Previous Month">◀</button>
+            <span id="cal-month-title" class="cal-month-title">OCTOBER 2026</span>
+            <button id="cal-next-month" class="cal-nav-btn" aria-label="Next Month">▶</button>
+          </div>
+
+          <!-- Trophy Banner -->
+          <div class="cal-trophy-card">
+            <div class="cal-trophy-icon" id="cal-trophy-icon">🏆</div>
+            <div class="cal-trophy-info">
+              <div class="cal-trophy-status" id="cal-trophy-title">CURRENT TROPHY: [★ GOLD TROPHY UNLOCKED ★]</div>
+              <div class="cal-trophy-desc" id="cal-trophy-desc">Crowns: <strong id="cal-crown-count">19</strong> / 20 for Gold Trophy</div>
+            </div>
+          </div>
+
+          <!-- 7-day Calendar Grid -->
+          <div class="cal-days-header">
+            <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
+          </div>
+          <div id="cal-grid" class="calendar-grid">
+            <!-- Populated dynamically -->
+          </div>
+
+          <!-- Meta Progression: Leveling & Jigsaw -->
+          <div class="cal-meta-section">
+            <div class="meta-row">
+              <div class="meta-item">
+                <span class="meta-label">LEVEL</span>
+                <span class="meta-val" id="meta-level">75</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-label">TOTAL STARS</span>
+                <span class="meta-val" id="meta-stars">62,300 ★</span>
+              </div>
+              <div class="meta-item">
+                <span class="meta-label">NEXT LEVEL</span>
+                <span class="meta-val" id="meta-stars-next">890 ★</span>
+              </div>
+            </div>
+            <div class="meta-jigsaw-box">
+              <div class="meta-jigsaw-title">
+                <span>🧩 Jigsaw Event: <strong id="meta-jigsaw-name">Autumn Cabin</strong></span>
+                <span class="meta-jigsaw-badge" id="meta-jigsaw-badges">6 Badges</span>
+              </div>
+              <div class="meta-jigsaw-stats">
+                <span>Pieces: <strong id="meta-jigsaw-pieces">226</strong></span>
+                <span>Puzzles Solved: <strong id="meta-jigsaw-puzzles">12</strong></span>
+              </div>
+            </div>
+          </div>
+
+          <div class="cal-actions">
+            <button id="btn-play-daily-selected" class="btn-primary">
+              <span id="btn-play-daily-text">Play Selected Hand</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
       <!-- Stats Modal -->
       <div id="modal-stats" class="modal-card hidden">
         <div class="modal-header">
@@ -290,6 +368,8 @@
               <button id="btn-confirm-import" class="btn-primary">Apply to Solitaire</button>
             </div>
           </div>
+        </div>
+      </div>
 
       <!-- Auth Modal -->
       <div id="modal-auth" class="modal-card hidden">

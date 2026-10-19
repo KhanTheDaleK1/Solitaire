@@ -1,18 +1,18 @@
 :root {
-  --bg-gradient: radial-gradient(circle at 50% 30%, #155e39 0%, #0a2e1c 100%);
-  --felt-color: #0e3d25;
-  --slot-bg: rgba(0, 0, 0, 0.22);
-  --slot-border: rgba(255, 255, 255, 0.15);
-  --card-bg: #ffffff;
-  --card-text-dark: #0f172a;
-  --card-text-red: #dc2626;
-  --card-shadow: 0 4px 10px rgba(0, 0, 0, 0.28), 0 1px 3px rgba(0, 0, 0, 0.15);
+  --bg-gradient: radial-gradient(circle at 50% 30%, #0e5c36 0%, #0b472a 100%);
+  --felt-color: #0b472a;
+  --slot-bg: rgba(0, 0, 0, 0.25);
+  --slot-border: rgba(255, 255, 255, 0.18);
+  --card-bg: #f8f9fa;
+  --card-text-dark: #121212;
+  --card-text-red: #e60000;
+  --card-shadow: 0 4px 10px rgba(26, 26, 26, 0.45), 0 1px 3px rgba(26, 26, 26, 0.3);
   --card-radius: 8px;
   --card-aspect: 0.714; /* 5 / 7 standard poker card */
   --accent-gold: #f59e0b;
   --accent-gold-hover: #d97706;
-  --header-bg: rgba(5, 20, 12, 0.75);
-  --toolbar-bg: rgba(5, 20, 12, 0.85);
+  --header-bg: rgba(7, 36, 21, 0.82);
+  --toolbar-bg: rgba(7, 36, 21, 0.9);
   --text-main: #f8fafc;
   --text-muted: #94a3b8;
   --safe-top: env(safe-area-inset-top, 0px);
@@ -21,7 +21,8 @@
 
 /* Themes */
 body.theme-classic {
-  --bg-gradient: radial-gradient(circle at 50% 30%, #1b633d 0%, #082415 100%);
+  --bg-gradient: radial-gradient(circle at 50% 30%, #0e5c36 0%, #0b472a 100%);
+  --felt-color: #0b472a;
 }
 body.theme-royal {
   --bg-gradient: radial-gradient(circle at 50% 30%, #1e3a8a 0%, #0b1536 100%);
@@ -279,7 +280,7 @@ html, body {
 }
 
 .card.face-down {
-  background: #1e3a8a;
+  background: #1034a6;
   border: 1.5px solid #ffffff;
   overflow: hidden;
 }
@@ -288,13 +289,9 @@ html, body {
   width: 100%;
   height: 100%;
   border-radius: calc(var(--card-radius) - 1px);
-  background: repeating-linear-gradient(
-    45deg,
-    #1d4ed8,
-    #1d4ed8 6px,
-    #1e40af 6px,
-    #1e40af 12px
-  );
+  background: 
+    repeating-linear-gradient(45deg, #1034a6, #1034a6 4px, #0b2575 4px, #0b2575 8px),
+    repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.08) 4px, transparent 4px, transparent 8px);
   border: 2px solid #ffffff;
   display: flex;
   align-items: center;
@@ -302,10 +299,11 @@ html, body {
 }
 
 .card-back-pattern {
-  width: 75%;
-  height: 75%;
-  border: 1px solid rgba(255, 255, 255, 0.4);
+  width: 80%;
+  height: 80%;
+  border: 1.5px solid rgba(255, 255, 255, 0.45);
   border-radius: 4px;
+  background: rgba(0, 0, 0, 0.15);
 }
 
 .card.face-up {
@@ -1038,6 +1036,283 @@ input:checked + .toggle-slider:before {
   height: 100%;
   pointer-events: none;
   z-index: 900;
+}
+
+/* Invalid Move Flash Effect */
+@keyframes flash-error {
+  0% { filter: invert(0.25) brightness(1.2); }
+  50% { filter: invert(0.35) brightness(1.3); }
+  100% { filter: none; }
+}
+
+body.flash-invalid {
+  animation: flash-error 90ms ease-out;
+}
+
+/* Daily Challenge Crown Button & Banner */
+.btn-crown {
+  color: var(--accent-gold);
+  border-color: rgba(245, 158, 11, 0.35);
+  background: rgba(245, 158, 11, 0.12);
+}
+
+.btn-crown:active {
+  background: rgba(245, 158, 11, 0.25);
+}
+
+.crown-svg {
+  filter: drop-shadow(0 0 4px rgba(245, 158, 11, 0.5));
+}
+
+.daily-banner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: linear-gradient(90deg, rgba(245, 158, 11, 0.15) 0%, rgba(245, 158, 11, 0.28) 50%, rgba(245, 158, 11, 0.15) 100%);
+  border-bottom: 1px solid rgba(245, 158, 11, 0.4);
+  padding: 4px 12px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #fbbf24;
+  z-index: 45;
+}
+
+.crown-banner-icon {
+  font-size: 14px;
+}
+
+.daily-banner-close {
+  background: transparent;
+  border: none;
+  color: #fbbf24;
+  font-size: 14px;
+  cursor: pointer;
+  margin-left: 8px;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.daily-banner-close:hover {
+  background: rgba(255, 255, 255, 0.15);
+}
+
+/* Daily Crown Calendar Modal */
+.modal-calendar-card {
+  max-width: 440px;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.calendar-header-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.crown-badge-header {
+  font-size: 20px;
+}
+
+.cal-nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.cal-nav-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #fff;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+}
+
+.cal-nav-btn:active {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.cal-month-title {
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #fff;
+}
+
+.cal-trophy-card {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(217, 119, 6, 0.1));
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+}
+
+.cal-trophy-icon {
+  font-size: 28px;
+}
+
+.cal-trophy-status {
+  font-size: 12px;
+  font-weight: 800;
+  color: #fbbf24;
+  letter-spacing: 0.05em;
+}
+
+.cal-trophy-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+.cal-days-header {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+  margin-bottom: 14px;
+}
+
+.cal-day {
+  aspect-ratio: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.15s ease;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.cal-day:hover {
+  background: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.cal-day.empty {
+  background: transparent;
+  border-color: transparent;
+  cursor: default;
+}
+
+.cal-day.today {
+  border-color: var(--accent-gold);
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  font-weight: 800;
+}
+
+.cal-day.selected {
+  outline: 2px solid #3b82f6;
+  outline-offset: 1px;
+}
+
+.cal-day.has-crown .day-crown-icon {
+  font-size: 13px;
+  line-height: 1;
+}
+
+.cal-day.future {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.cal-meta-section {
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 10px 12px;
+  margin-bottom: 14px;
+}
+
+.meta-row {
+  display: flex;
+  justify-content: space-around;
+  margin-bottom: 8px;
+}
+
+.meta-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.meta-label {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.meta-val {
+  font-size: 13px;
+  font-weight: 800;
+  color: #fbbf24;
+}
+
+.meta-jigsaw-box {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.meta-jigsaw-title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.meta-jigsaw-badge {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+  padding: 2px 6px;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 10px;
+}
+
+.meta-jigsaw-stats {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-muted);
+}
+
+.meta-jigsaw-stats strong {
+  color: #fff;
+}
+
+.cal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 /* Utility */

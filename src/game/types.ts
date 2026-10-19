@@ -41,6 +41,23 @@ export interface GameState {
   isWon: boolean;
   isStarted: boolean;
   drawMode: DrawMode;
+  isDailyChallenge?: boolean;
+  dailyDate?: string; // YYYY-MM-DD
+}
+
+export interface MonthCrownData {
+  daysCompleted: number[];
+  trophyUnlocked: 'NONE' | 'BRONZE' | 'SILVER' | 'GOLD';
+}
+
+export interface MetaProgression {
+  level: number;
+  totalStars: number;
+  starsToNextLevel: number;
+  currentPuzzle: string;
+  piecesCollected: number;
+  puzzlesCompleted: number;
+  badgesEarned: number;
 }
 
 export interface UserStats {
@@ -50,6 +67,8 @@ export interface UserStats {
   bestStreak: number;
   bestScore: number;
   bestTime: number | null; // seconds
+  crowns: Record<string, MonthCrownData>; // e.g. "2026-10": {...}
+  meta: MetaProgression;
 }
 
 export interface AuthUser {
