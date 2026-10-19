@@ -76,6 +76,7 @@ class SolitaireApp {
     this.calendarModal = document.getElementById('modal-calendar')!;
 
     this.initEventListeners();
+    this.initSavedPreferences();
     this.initTimer();
     this.initPWA();
 
@@ -206,6 +207,31 @@ class SolitaireApp {
         target.classList.add('active');
         const drawMode = parseInt(target.dataset.draw || '1', 10) as DrawMode;
         this.engine.state.drawMode = drawMode;
+      });
+    });
+
+    // Handedness listeners (Left / Right ergonomic layout)
+    document.querySelectorAll('[data-hand]').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('[data-hand]').forEach(b => b.classList.remove('active'));
+        const target = e.currentTarget as HTMLElement;
+        target.classList.add('active');
+        const hand = target.dataset.hand || 'right';
+        document.body.classList.toggle('left-handed', hand === 'left');
+        localStorage.setItem('solitaire_handedness', hand);
+      });
+    });
+
+    // Card Faces listeners (Classic / Modern)
+    document.querySelectorAll('[data-face]').forEach((btn) => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('[data-face]').forEach(b => b.classList.remove('active'));
+        const target = e.currentTarget as HTMLElement;
+        target.classList.add('active');
+        const face = target.dataset.face || 'classic';
+        document.body.classList.remove('card-faces-classic', 'card-faces-modern');
+        document.body.classList.add(`card-faces-${face}`);
+        localStorage.setItem('solitaire_card_face', face);
       });
     });
 
@@ -823,6 +849,24 @@ class SolitaireApp {
       loggedInView.classList.add('hidden');
       loggedOutView.classList.remove('hidden');
     }
+  }
+
+  private initSavedPreferences(): void {
+    // 1. Handedness (Left/Right ergonomics)
+    const savedHand = localStorage.getItem('solitaire_handedness') || 'right';
+    if (savedHand === 'left') {
+      document.body.classList.add('left-handed');
+      document.getElementById('btn-hand-right')?.classList.remove('active');
+      document.getElementById('btn-hand-left')?.classList.add('active');
+    }
+
+    // 2. Card Faces (Classic/Modern)
+    const savedFace = localStorage.getItem('solitaire_card_face') || 'classic';
+    document.body.classList.add(`card-faces-${savedFace}`);
+    document.querySelectorAll('[data-face]').forEach(b => {
+      if ((b as HTMLElement).dataset.face === savedFace) b.classList.add('active');
+      else b.classList.remove('active');
+    });
   }
 
   private initPWA(): void {

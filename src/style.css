@@ -194,6 +194,19 @@ html, body {
   justify-content: space-between;
   width: 100%;
   gap: 8px;
+  transition: flex-direction 0.2s ease;
+}
+
+body.left-handed .board-top {
+  flex-direction: row-reverse;
+}
+
+body.left-handed .deck-area {
+  flex-direction: row-reverse;
+}
+
+body.left-handed .foundations-area {
+  flex-direction: row-reverse;
 }
 
 .deck-area {
@@ -435,10 +448,37 @@ html, body {
   height: 22px;
 }
 
+@keyframes autoFinishPulse {
+  0% { transform: scale(1); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4); }
+  50% { transform: scale(1.05); box-shadow: 0 4px 20px rgba(16, 185, 129, 0.85); }
+  100% { transform: scale(1); box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4); }
+}
+
 .toolbar-btn.btn-highlight {
   color: #ffffff;
   background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
+  animation: autoFinishPulse 1.6s infinite ease-in-out;
+}
+
+/* Card Faces Styles */
+body.card-faces-classic .card-center-suit {
+  font-family: 'Times New Roman', serif;
+}
+
+body.card-faces-classic .corner-rank {
+  font-family: 'Times New Roman', serif;
+  font-weight: 800;
+}
+
+body.card-faces-modern .corner-rank {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+
+body.card-faces-modern .card-center-suit {
+  filter: contrast(1.15);
 }
 
 /* Modals & Backdrop */

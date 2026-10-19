@@ -21,7 +21,7 @@
     <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
 
-    <!-- Google Fonts: Inter -->
+    <!-- Google Fonts: Plus Jakarta Sans -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
@@ -68,6 +68,7 @@
           </button>
         </div>
       </header>
+
       <div id="daily-banner" class="daily-banner hidden">
         <span class="crown-banner-icon">👑</span>
         <span id="daily-banner-date" class="daily-banner-text">DAILY CHALLENGE: OCTOBER 19, 2026</span>
@@ -170,8 +171,30 @@
 
           <div class="setting-item">
             <div class="setting-text">
+              <span class="setting-title">Handedness</span>
+              <span class="setting-desc">Swap stock and foundation sides</span>
+            </div>
+            <div class="segmented-control">
+              <button class="segment-btn active" id="btn-hand-right" data-hand="right">Right</button>
+              <button class="segment-btn" id="btn-hand-left" data-hand="left">Left</button>
+            </div>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-text">
+              <span class="setting-title">Card Faces</span>
+              <span class="setting-desc">Classic woodcut or Modern high-contrast</span>
+            </div>
+            <div class="segmented-control">
+              <button class="segment-btn active" data-face="classic">Classic</button>
+              <button class="segment-btn" data-face="modern">Modern</button>
+            </div>
+          </div>
+
+          <div class="setting-item">
+            <div class="setting-text">
               <span class="setting-title">Sound Effects</span>
-              <span class="setting-desc">Audio feedback for card moves</span>
+              <span class="setting-desc">Tactile foley & chimes</span>
             </div>
             <label class="toggle-switch">
               <input type="checkbox" id="toggle-sound" checked />
@@ -182,7 +205,7 @@
           <div class="setting-item">
             <div class="setting-text">
               <span class="setting-title">Haptic Feedback</span>
-              <span class="setting-desc">Vibrate on touch and drops</span>
+              <span class="setting-desc">Vibrate on touch and snaps</span>
             </div>
             <label class="toggle-switch">
               <input type="checkbox" id="toggle-haptics" checked />
@@ -215,14 +238,12 @@
           <button class="modal-close-btn" data-close>&times;</button>
         </div>
         <div class="modal-body">
-          <!-- Month Navigation -->
           <div class="cal-nav">
             <button id="cal-prev-month" class="cal-nav-btn" aria-label="Previous Month">◀</button>
             <span id="cal-month-title" class="cal-month-title">OCTOBER 2026</span>
             <button id="cal-next-month" class="cal-nav-btn" aria-label="Next Month">▶</button>
           </div>
 
-          <!-- Trophy Banner -->
           <div class="cal-trophy-card">
             <div class="cal-trophy-icon" id="cal-trophy-icon">🏆</div>
             <div class="cal-trophy-info">
@@ -231,15 +252,13 @@
             </div>
           </div>
 
-          <!-- 7-day Calendar Grid -->
           <div class="cal-days-header">
             <span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span>
           </div>
           <div id="cal-grid" class="calendar-grid">
-            <!-- Populated dynamically -->
+            <!-- Dynamically populated -->
           </div>
 
-          <!-- Meta Progression: Leveling & Jigsaw -->
           <div class="cal-meta-section">
             <div class="meta-row">
               <div class="meta-item">
@@ -329,7 +348,7 @@
           <button class="modal-close-btn" data-close>&times;</button>
         </div>
         <div class="modal-body">
-          <p class="auth-intro">Import your existing stats from <strong>MobilityWare Solitaire</strong> (Android <code>.xml</code>, iOS <code>.plist</code>, <code>.sqlite</code>, or <code>.json</code>).</p>
+          <p class="auth-intro">Import stats from <strong>MobilityWare Solitaire</strong> (Android <code>.xml</code>, iOS <code>.plist</code>, <code>.sqlite</code>, or <code>.json</code>).</p>
           
           <div id="drop-zone" class="drop-zone">
             <svg viewBox="0 0 24 24" class="drop-icon"><path fill="currentColor" d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM14 13v4h-4v-4H7l5-5 5 5h-3z"/></svg>
@@ -378,7 +397,6 @@
           <button class="modal-close-btn" data-close>&times;</button>
         </div>
         <div class="modal-body">
-          <!-- Logged Out View -->
           <div id="auth-logged-out" class="auth-view">
             <p class="auth-intro">Sign in to sync your high scores, win streaks, crowns, and Solitaire statistics across devices.</p>
             
@@ -403,24 +421,23 @@
             <div class="auth-handle-card">
               <span class="auth-handle-title">Instant GitHub Profile</span>
               <div class="auth-handle-row">
-                <input type="text" id="input-github-username" class="auth-input" placeholder="Enter GitHub username (e.g. KhanTheDaleK1)" />
+                <input type="text" id="input-github-username" class="auth-input" placeholder="Enter GitHub username" />
                 <button id="btn-save-username" class="btn-primary auth-mini-btn">Set Profile</button>
               </div>
             </div>
 
-            <!-- GitHub OAuth Credentials Setup Helper -->
+            <!-- Firebase / GitHub OAuth Setup Helper -->
             <div id="auth-setup-card" class="auth-setup-card">
               <button id="btn-toggle-oauth-setup" class="text-btn setup-toggle-btn">
-                <span>⚙️ Configure GitHub OAuth Keys</span>
+                <span>⚙️ Firebase OAuth Configuration</span>
               </button>
               <div id="oauth-setup-fields" class="oauth-setup-fields hidden">
                 <p class="setup-hint">
-                  To enable GitHub pop-up sign-in, create an OAuth App at 
-                  <a href="https://github.com/settings/developers" target="_blank" rel="noopener">github.com/settings/developers</a>:
+                  To enable GitHub pop-up authentication, register the app in your Firebase Project Console and configure your OAuth App under GitHub Developer Settings:
                 </p>
                 <div class="setup-field-hint">
-                  <span>Authorization Callback URL:</span>
-                  <code id="setup-callback-url">https://solitaire.beechem.site/api/auth/github/callback</code>
+                  <span>Firebase Callback URL:</span>
+                  <code id="setup-callback-url">https://&lt;firebase-project-id&gt;.firebaseapp.com/__/auth/handler</code>
                 </div>
                 <input type="text" id="setup-client-id" class="auth-input" placeholder="GitHub Client ID" />
                 <input type="password" id="setup-client-secret" class="auth-input" placeholder="GitHub Client Secret" />
