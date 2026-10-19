@@ -18,6 +18,7 @@ class SolitaireApp {
   private statsManager: StatsManager;
   private timerInterval: number | null = null;
   private autoFinishInterval: number | null = null;
+  private autoFinishTimeout: number | null = null;
 
   // DOM Elements
   private stockPileEl: HTMLElement;
@@ -148,6 +149,7 @@ class SolitaireApp {
 
     // MobilityWare Play Menu Options
     document.getElementById('btn-deal-winning')?.addEventListener('click', () => {
+      this.stopAutoFinish();
       this.recordUnfinishedIfStarted();
       this.closeModals();
       this.animator.stop();
@@ -157,6 +159,7 @@ class SolitaireApp {
     });
 
     document.getElementById('btn-deal-random')?.addEventListener('click', () => {
+      this.stopAutoFinish();
       this.recordUnfinishedIfStarted();
       this.closeModals();
       this.animator.stop();
@@ -166,6 +169,7 @@ class SolitaireApp {
     });
 
     document.getElementById('btn-deal-replay')?.addEventListener('click', () => {
+      this.stopAutoFinish();
       this.closeModals();
       this.animator.stop();
       this.engine.restartCurrentDeal();
@@ -173,11 +177,13 @@ class SolitaireApp {
     });
 
     document.getElementById('btn-deal-daily')?.addEventListener('click', () => {
+      this.stopAutoFinish();
       this.recordUnfinishedIfStarted();
       this.startDailyChallenge(formatDate());
     });
 
     document.getElementById('btn-undo')?.addEventListener('click', () => {
+      this.stopAutoFinish();
       if (this.engine.undo()) {
         this.sound.playCardFlip();
       } else {
@@ -205,6 +211,7 @@ class SolitaireApp {
 
     // Victory modal Play Again button
     document.getElementById('btn-victory-again')?.addEventListener('click', () => {
+      this.stopAutoFinish();
       this.closeModals();
       this.animator.stop();
       if (this.engine.state.isDailyChallenge) {
@@ -718,6 +725,17 @@ class SolitaireApp {
     const movedSet = new Set(shouldAnimate && action ? action.movedCardIds : []);
     const isDealAction = Boolean(shouldAnimate && action?.type === 'deal');
 
+    // Capture previous card screen positions before re-rendering for smooth FLIP flight to foundations
+    const prevCardRects = new Map<string, DOMRect>();
+    if (movedSet.size > 0) {
+      document.querySelectorAll<HTMLElement>('.playfield .card[data-id]').forEach(el => {
+        const id = el.dataset.id;
+        if (id && movedSet.has(id)) {
+          prevCardRects.set(id, el.getBoundingClientRect());
+        }
+      });
+    }
+
     // 1. Stock Pile & Remaining Card Badge
     const stockPlaceholder = this.stockPileEl.querySelector('.card-placeholder') as HTMLElement;
     const existingStockCards = this.stockPileEl.querySelectorAll('.card');
@@ -767,7 +785,7 @@ class SolitaireApp {
       wastePlaceholder.classList.remove('hidden');
     }
 
-    // 3. Foundations
+    // 3. Foundations (render top 2 cards so beneath card stays visible while newly moved card glides in)
     for (let f = 0; f < 4; f++) {
       const fEl = this.foundationEls[f];
       const placeholder = fEl.querySelector('.card-placeholder') as HTMLElement;
@@ -777,13 +795,41 @@ class SolitaireApp {
       const pile = state.foundations[f];
       if (pile.length > 0) {
         placeholder.classList.add('hidden');
-        const topCard = pile[pile.length - 1];
-        const isMovedHere = movedSet.has(topCard.id) && action?.targetPile?.type === 'foundation' && action.targetPile.index === f;
-        const cardEl = CardRenderer.createCardElement(topCard, false, {
-          isMoving: isMovedHere
-        });
-        this.dragDrop.registerCard(cardEl, topCard, { type: 'foundation', index: f });
-        fEl.appendChild(cardEl);
+        const startIdx = Math.max(0, pile.length - 2);
+        for (let i = startIdx; i < pile.length; i++) {
+          const card = pile[i];
+          const isTop = i === pile.length - 1;
+          const isMovedHere = isTop && movedSet.has(card.id) && action?.targetPile?.type === 'foundation' && action.targetPile.index === f;
+          const cardEl = CardRenderer.createCardElement(card, false, {
+            isMoving: isMovedHere && !prevCardRects.has(card.id)
+          });
+          cardEl.style.zIndex = isTop ? '2' : '1';
+
+          if (isTop) {
+            this.dragDrop.registerCard(cardEl, card, { type: 'foundation', index: f });
+          }
+          fEl.appendChild(cardEl);
+
+          if (isMovedHere && prevCardRects.has(card.id) && typeof cardEl.animate === 'function') {
+            const prevRect = prevCardRects.get(card.id)!;
+            const targetRect = fEl.getBoundingClientRect();
+            const dx = prevRect.left - targetRect.left;
+            const dy = prevRect.top - targetRect.top;
+            if (Math.abs(dx) > 2 || Math.abs(dy) > 2) {
+              cardEl.style.zIndex = '400';
+              const anim = cardEl.animate(
+                [
+                  { transform: `translate3d(${dx}px, ${dy}px, 0) scale(1.05)` },
+                  { transform: 'translate3d(0, 0, 0) scale(1)' }
+                ],
+                { duration: 165, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' }
+              );
+              anim.onfinish = () => {
+                cardEl.style.zIndex = '2';
+              };
+            }
+          }
+        }
       } else {
         placeholder.classList.remove('hidden');
       }
@@ -833,15 +879,25 @@ class SolitaireApp {
       });
     }
 
-    // 5. Auto-Finish availability
+    // 5. Auto-Complete when stock stack is empty and all cards have been flipped
     if (this.engine.canAutoFinish()) {
       this.autoFinishBtn.classList.remove('hidden');
+      if (!this.autoFinishInterval && !this.autoFinishTimeout && action?.type !== 'undo') {
+        const delayMs = flippedSet.size > 0 ? 230 : 120;
+        this.autoFinishTimeout = window.setTimeout(() => {
+          this.autoFinishTimeout = null;
+          if (this.engine.canAutoFinish() && !this.autoFinishInterval) {
+            this.startAutoFinish();
+          }
+        }, delayMs);
+      }
     } else {
       this.autoFinishBtn.classList.add('hidden');
     }
 
     // 6. Win check
     if (state.isWon) {
+      this.stopAutoFinish();
       this.handleGameWon();
     }
   }
@@ -864,21 +920,39 @@ class SolitaireApp {
     }, 1200);
   }
 
+  private stopAutoFinish(): void {
+    if (this.autoFinishTimeout !== null) {
+      clearTimeout(this.autoFinishTimeout);
+      this.autoFinishTimeout = null;
+    }
+    if (this.autoFinishInterval !== null) {
+      clearInterval(this.autoFinishInterval);
+      this.autoFinishInterval = null;
+    }
+  }
+
   private startAutoFinish(): void {
-    if (this.autoFinishInterval) clearInterval(this.autoFinishInterval);
-    this.autoFinishInterval = window.setInterval(() => {
+    this.stopAutoFinish();
+    const runStep = () => {
+      if (!this.engine.canAutoFinish()) {
+        this.stopAutoFinish();
+        return;
+      }
       const moved = this.engine.autoFinishStep();
       if (moved) {
         const last = this.engine.state.history[this.engine.state.history.length - 1];
         const rank = last?.cards[0]?.rank || 5;
+        this.sound.playCardPlace();
         this.sound.playFoundationPlaced(rank);
       } else {
-        if (this.autoFinishInterval) {
-          clearInterval(this.autoFinishInterval);
-          this.autoFinishInterval = null;
-        }
+        this.stopAutoFinish();
       }
-    }, 95);
+    };
+
+    runStep();
+    if (this.engine.canAutoFinish()) {
+      this.autoFinishInterval = window.setInterval(runStep, 85);
+    }
   }
 
   private handleGameWon(): void {

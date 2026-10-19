@@ -522,9 +522,12 @@ export class SolitaireEngine {
     return null;
   }
 
-  // Check if auto-finish is available (all cards revealed and stock/waste empty)
+  // Check if auto-finish is available (stock stack is empty and all tableau cards have been flipped face-up)
   public canAutoFinish(): boolean {
-    if (this.state.stock.length > 0 || this.state.waste.length > 0) {
+    if (this.state.isWon) {
+      return false;
+    }
+    if (this.state.stock.length > 0) {
       return false;
     }
     for (const col of this.state.tableau) {
@@ -532,22 +535,90 @@ export class SolitaireEngine {
         return false;
       }
     }
-    return !this.state.isWon;
+    const totalFoundationCards = this.state.foundations.reduce((acc, f) => acc + f.length, 0);
+    return totalFoundationCards < 52;
   }
 
-  // Run a single auto-finish step
+  // Run a single auto-finish step (moves lowest-rank eligible card from tableau or waste to foundations)
   public autoFinishStep(): boolean {
+    let bestMove: { card: Card; from: PileLocation; foundationIdx: number; wasteArrayIdx?: number } | null = null;
+
+    // 1. Check exposed top waste card
+    if (this.state.waste.length > 0) {
+      const topWaste = this.state.waste[this.state.waste.length - 1];
+      for (let f = 0; f < 4; f++) {
+        if (this.isValidFoundationMove(topWaste, f)) {
+          bestMove = { card: topWaste, from: { type: 'waste', index: 0 }, foundationIdx: f };
+          break;
+        }
+      }
+    }
+
+    // 2. Check exposed bottom card of each tableau column
     for (let colIdx = 0; colIdx < 7; colIdx++) {
       const col = this.state.tableau[colIdx];
       if (col.length > 0) {
         const card = col[col.length - 1];
         for (let f = 0; f < 4; f++) {
           if (this.isValidFoundationMove(card, f)) {
-            return this.moveCards([card], { type: 'tableau', index: colIdx }, { type: 'foundation', index: f });
+            if (!bestMove || card.rank < bestMove.card.rank) {
+              bestMove = { card, from: { type: 'tableau', index: colIdx }, foundationIdx: f };
+            }
+            break;
           }
         }
       }
     }
+
+    if (bestMove) {
+      return this.moveCards([bestMove.card], bestMove.from, { type: 'foundation', index: bestMove.foundationIdx });
+    }
+
+    // 3. Fallback if waste has multiple cards and a lower-rank card is deeper in the waste pile
+    if (this.state.waste.length > 0) {
+      for (let wIdx = this.state.waste.length - 1; wIdx >= 0; wIdx--) {
+        const card = this.state.waste[wIdx];
+        for (let f = 0; f < 4; f++) {
+          if (this.isValidFoundationMove(card, f)) {
+            if (!bestMove || card.rank < bestMove.card.rank) {
+              bestMove = { card, from: { type: 'waste', index: 0 }, foundationIdx: f, wasteArrayIdx: wIdx };
+            }
+            break;
+          }
+        }
+      }
+
+      if (bestMove && bestMove.wasteArrayIdx !== undefined) {
+        this.startTimer();
+        const [removedCard] = this.state.waste.splice(bestMove.wasteArrayIdx, 1);
+        this.state.foundations[bestMove.foundationIdx].push(removedCard);
+        const scoreChange = this.state.scoringMode === 'vegas' ? 5 : 10;
+        if (this.state.scoringMode === 'standard') {
+          this.state.score = Math.max(0, this.state.score + scoreChange);
+        } else {
+          this.state.score += scoreChange;
+        }
+        this.state.moves++;
+        this.state.history.push({
+          cards: [removedCard],
+          from: { type: 'waste', index: 0 },
+          to: { type: 'foundation', index: bestMove.foundationIdx },
+          cardFlipped: false,
+          scoreChange
+        });
+        this.state.lastAction = {
+          type: 'move',
+          flippedCardIds: [],
+          movedCardIds: [removedCard.id],
+          targetPile: { type: 'foundation', index: bestMove.foundationIdx },
+          timestamp: Date.now()
+        };
+        this.checkWinCondition();
+        this.notify();
+        return true;
+      }
+    }
+
     return false;
   }
 
