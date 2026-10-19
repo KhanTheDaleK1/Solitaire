@@ -27,36 +27,60 @@
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/src/style.css" />
   </head>
-  <body class="theme-classic deck-fantasy back-blue-lattice">
-    <!-- Shared SVG Metallic Gold & Ambient Glow Gradients for Dark Fantasy Gilded Cards -->
+  <body class="theme-classic theme-dark-fantasy deck-fantasy back-blue-lattice">
+    <!-- Shared SVG Metallic Gold, Elemental Suit Auras & Suit Symbols for Dark Fantasy Gilded Cards -->
     <svg width="0" height="0" style="position:absolute; width:0; height:0; pointer-events:none;" aria-hidden="true">
       <defs>
         <linearGradient id="goldLinear" x1="0%" y1="0%" x2="100%" y2="100%">
           <stop offset="0%" stop-color="#fce082" />
-          <stop offset="50%" stop-color="#d4af37" />
-          <stop offset="100%" stop-color="#8c6d23" />
+          <stop offset="45%" stop-color="#d4af37" />
+          <stop offset="85%" stop-color="#aa8428" />
+          <stop offset="100%" stop-color="#573e0c" />
         </linearGradient>
-        <radialGradient id="nebula" cx="50%" cy="50%" r="50%">
+        <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#fce082" />
+          <stop offset="45%" stop-color="#d4af37" />
+          <stop offset="85%" stop-color="#aa8428" />
+          <stop offset="100%" stop-color="#573e0c" />
+        </linearGradient>
+        <radialGradient id="nebula" cx="50%" cy="50%" r="55%">
           <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.55" />
           <stop offset="45%" stop-color="#1e3a8a" stop-opacity="0.32" />
-          <stop offset="100%" stop-color="#090b10" stop-opacity="0" />
+          <stop offset="100%" stop-color="#07090e" stop-opacity="0" />
         </radialGradient>
-        <radialGradient id="rubyNebula" cx="50%" cy="50%" r="50%">
+        <radialGradient id="nebulaGlow" cx="50%" cy="50%" r="55%">
+          <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.5" />
+          <stop offset="45%" stop-color="#1e3a8a" stop-opacity="0.3" />
+          <stop offset="100%" stop-color="#07090e" stop-opacity="0" />
+        </radialGradient>
+        <radialGradient id="rubyNebula" cx="50%" cy="50%" r="55%">
           <stop offset="0%" stop-color="#f43f5e" stop-opacity="0.5" />
           <stop offset="45%" stop-color="#7f1d1d" stop-opacity="0.3" />
-          <stop offset="100%" stop-color="#090b10" stop-opacity="0" />
+          <stop offset="100%" stop-color="#07090e" stop-opacity="0" />
+        </radialGradient>
+        <radialGradient id="heartRedAura" cx="40%" cy="35%" r="65%">
+          <stop offset="0%" stop-color="#991b1b" stop-opacity="0.62" />
+          <stop offset="100%" stop-color="#07090e" stop-opacity="0.1" />
         </radialGradient>
         <radialGradient id="redGlow" cx="50%" cy="30%" r="60%">
           <stop offset="0%" stop-color="#7f1d1d" stop-opacity="0.65" />
-          <stop offset="100%" stop-color="#090b10" stop-opacity="0.1" />
+          <stop offset="100%" stop-color="#07090e" stop-opacity="0.1" />
         </radialGradient>
         <radialGradient id="sorceressGlow" cx="50%" cy="30%" r="60%">
-          <stop offset="0%" stop-color="#581c87" stop-opacity="0.6" />
-          <stop offset="100%" stop-color="#090b10" stop-opacity="0.1" />
+          <stop offset="0%" stop-color="#581c87" stop-opacity="0.62" />
+          <stop offset="100%" stop-color="#07090e" stop-opacity="0.1" />
+        </radialGradient>
+        <radialGradient id="solarAura" cx="65%" cy="40%" r="65%">
+          <stop offset="0%" stop-color="#b45309" stop-opacity="0.62" />
+          <stop offset="100%" stop-color="#07090e" stop-opacity="0.1" />
+        </radialGradient>
+        <radialGradient id="forestAura" cx="60%" cy="40%" r="65%">
+          <stop offset="0%" stop-color="#14532d" stop-opacity="0.62" />
+          <stop offset="100%" stop-color="#07090e" stop-opacity="0.1" />
         </radialGradient>
         <radialGradient id="rogueGlow" cx="50%" cy="35%" r="60%">
           <stop offset="0%" stop-color="#78350f" stop-opacity="0.55" />
-          <stop offset="100%" stop-color="#090b10" stop-opacity="0.1" />
+          <stop offset="100%" stop-color="#07090e" stop-opacity="0.1" />
         </radialGradient>
       </defs>
     </svg>
