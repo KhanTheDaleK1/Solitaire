@@ -340,16 +340,16 @@ class SolitaireApp {
       });
     });
 
-    // Card Face Style (Classic / Modern / Midnight / Crown)
+    // Card Face Style (Dark Fantasy Gilded / Classic / Modern / Midnight / Crown)
     document.querySelectorAll('[data-deck]').forEach((btn) => {
       btn.addEventListener('click', (e) => {
         document.querySelectorAll('[data-deck]').forEach(b => b.classList.remove('active'));
         const target = e.currentTarget as HTMLElement;
         target.classList.add('active');
-        const deck = target.dataset.deck || 'classic';
-        document.body.classList.remove('deck-classic', 'deck-modern', 'deck-midnight', 'deck-crown', 'card-faces-classic', 'card-faces-modern');
+        const deck = target.dataset.deck || 'fantasy';
+        document.body.classList.remove('deck-fantasy', 'deck-classic', 'deck-modern', 'deck-midnight', 'deck-crown', 'card-faces-classic', 'card-faces-modern');
         document.body.classList.add(`deck-${deck}`);
-        localStorage.setItem('solitaire_card_style', deck);
+        localStorage.setItem('solitaire_card_style_v2', deck);
       });
     });
 
@@ -1318,9 +1318,9 @@ class SolitaireApp {
       document.getElementById('btn-hand-left')?.classList.add('active');
     }
 
-    // 2. Deck Face Theme
-    const savedDeck = localStorage.getItem('solitaire_card_style') || 'classic';
-    document.body.classList.remove('deck-classic', 'deck-modern', 'deck-midnight', 'deck-crown');
+    // 2. Deck Face Theme (defaults to Dark Fantasy Gilded)
+    const savedDeck = localStorage.getItem('solitaire_card_style_v2') || 'fantasy';
+    document.body.classList.remove('deck-fantasy', 'deck-classic', 'deck-modern', 'deck-midnight', 'deck-crown');
     document.body.classList.add(`deck-${savedDeck}`);
     document.querySelectorAll('[data-deck]').forEach(b => {
       b.classList.toggle('active', (b as HTMLElement).dataset.deck === savedDeck);

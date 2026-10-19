@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Dark Fantasy Gilded Solitaire Theme</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --gold-primary: #d4af37;
+    --gold-bright: #f9e27c;
+    --gold-dark: #8c6d23;
+    --gold-gradient: linear-gradient(135deg, #fce082 0%, #d4af37 50%, #997825 100%);
+    --midnight-bg: #090b10;
+    --card-radius: 10px;
+    --card-width: 140px;
+    --card-height: 210px;
+  }
+
+  body {
+    background: #06090e;
+    color: #e2e8f0;
+    font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+    margin: 0;
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  h1 {
+    font-size: 22px;
+    margin-bottom: 4px;
+    color: #f7d774;
+    text-shadow: 0 2px 10px rgba(212,175,55,0.4);
+    letter-spacing: 0.5px;
+  }
+  p.sub {
+    font-size: 13px;
+    color: #94a3b8;
+    margin-bottom: 28px;
+  }
+
+  .deck-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 16px;
+    padding: 24px;
+    background: radial-gradient(circle at 50% 50%, #151d28 0%, #090c12 100%);
+    border-radius: 16px;
+    box-shadow: 0 16px 40px rgba(0,0,0,0.8), inset 0 0 0 1px rgba(212,175,55,0.2);
+  }
+
+  /* Card Container */
+  .card-gilded {
+    width: var(--card-width);
+    height: var(--card-height);
+    border-radius: var(--card-radius);
+    background: var(--gold-gradient);
+    padding: 4px;
+    box-sizing: border-box;
+    position: relative;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.7), 0 2px 6px rgba(212,175,55,0.25);
+    user-select: none;
+    overflow: hidden;
+    isolation: isolate;
+  }
+
+  /* Inner Card Face */
+  .card-inner {
+    width: 100%;
+    height: 100%;
+    background: var(--midnight-bg);
+    border-radius: calc(var(--card-radius) - 3px);
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Gold Celtic / Filigree Border Overlay */
+  .filigree-frame {
+    position: absolute;
+    inset: 3px;
+    pointer-events: none;
+    z-index: 4;
+  }
+
+  /* Character / Art Layer */
+  .art-layer {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    display: flex;
+    align-items: flex-end;
+    justify-content: center;
+  }
+  .art-layer img,
+  .art-layer svg {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  /* Subtle vignette over the illustration */
+  .art-vignette {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    background: radial-gradient(circle at 50% 40%, rgba(9,11,16,0) 30%, rgba(9,11,16,0.6) 80%, rgba(9,11,16,0.95) 100%),
+                linear-gradient(to bottom, rgba(9,11,16,0.4) 0%, transparent 25%, transparent 75%, rgba(9,11,16,0.7) 100%);
+    pointer-events: none;
+  }
+
+  /* Indices: Top Left & Bottom Right */
+  .index-badge {
+    position: absolute;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    line-height: 0.9;
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.9));
+  }
+  .index-top {
+    top: 6px;
+    left: 8px;
+  }
+
+  .rank-glyph {
+    font-family: 'Cinzel', 'Times New Roman', Georgia, serif;
+    font-size: 26px;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+    background: var(--gold-gradient);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .suit-glyph {
+    width: 18px;
+    height: 18px;
+    margin-top: 3px;
+  }
+
+  .suit-heart-fill,
+  .suit-diamond-fill {
+    fill: #b91c1c;
+    stroke: #f6d365;
+    stroke-width: 4;
+  }
+  .suit-gold-fill {
+    fill: url(#goldLinear);
+    stroke: #f9e27c;
+    stroke-width: 3;
+  }
+</style>
+</head>
+<body>
+
+<h1>Dark Fantasy Gilded Solitaire Theme</h1>
+<p class="sub">Deep midnight velvet canvas, metallic gradient gold borders, and illuminated court portraits.</p>
+
+<div class="deck-row">
+  <!-- ACE OF SPADES (Glow Crest) -->
+  <div class="card-gilded">
+    <div class="card-inner">
+      <div class="index-badge index-top">
+        <span class="rank-glyph">A</span>
+        <svg class="suit-glyph" viewBox="0 0 100 100">
+          <defs>
+            <linearGradient id="goldLinear" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#fce082" />
+              <stop offset="50%" stop-color="#d4af37" />
+              <stop offset="100%" stop-color="#8c6d23" />
+            </linearGradient>
+          </defs>
+          <path class="suit-gold-fill" d="M50 15 C50 15 88 50 88 68 C88 80 78 86 66 86 C54 86 51 78 50 74 C49 78 46 86 34 86 C22 86 12 80 12 68 C12 50 50 15 50 15 Z" />
+          <path class="suit-gold-fill" d="M44 78 L38 94 L62 94 L56 78 Z" />
+        </svg>
+      </div>
+
+      <div class="art-layer">
+        <svg viewBox="0 0 140 210" style="width:100%; height:100%;">
+          <defs>
+            <radialGradient id="nebula" cx="50%" cy="50%" r="50%">
+              <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.5"/>
+              <stop offset="40%" stop-color="#1e3a8a" stop-opacity="0.3"/>
+              <stop offset="100%" stop-color="#090b10" stop-opacity="0"/>
+            </radialGradient>
+          </defs>
+          <circle cx="70" cy="105" r="60" fill="url(#nebula)" />
+          <circle cx="50" cy="70" r="1.5" fill="#e0f2fe" opacity="0.8"/>
+          <circle cx="95" cy="85" r="1.2" fill="#e0f2fe" opacity="0.9"/>
+          <circle cx="45" cy="130" r="1" fill="#e0f2fe" opacity="0.7"/>
+          <circle cx="85" cy="140" r="2" fill="#e0f2fe" opacity="0.8"/>
+          <path d="M70 45 C70 45 105 80 105 102 C105 116 95 125 82 125 C70 125 68 116 70 112 C68 116 66 125 54 125 C41 125 35 116 35 102 C35 80 70 45 70 45 Z" fill="none" stroke="url(#goldLinear)" stroke-width="2.5"/>
+          <path d="M64 120 L58 145 L82 145 L76 120 Z" fill="url(#goldLinear)"/>
+          <path d="M70 65 Q80 85 85 105 Q70 115 70 95 Q70 115 55 105 Q60 85 70 65 Z" fill="none" stroke="#7dd3fc" stroke-width="1.5" opacity="0.85"/>
+        </svg>
+      </div>
+
+      <div class="art-vignette"></div>
+
+      <svg class="filigree-frame" viewBox="0 0 132 202">
+        <rect x="2" y="2" width="128" height="198" rx="6" fill="none" stroke="url(#goldLinear)" stroke-width="1.2" stroke-dasharray="6 2 2 2"/>
+        <path d="M6 18 L18 6 M6 6 L6 14 M6 6 L14 6" stroke="url(#goldLinear)" stroke-width="1.5" fill="none"/>
+        <path d="M126 18 L114 6 M126 6 L126 14 M126 6 L118 6" stroke="url(#goldLinear)" stroke-width="1.5" fill="none"/>
+        <path d="M6 184 L18 196 M6 196 L6 188 M6 196 L14 196" stroke="url(#goldLinear)" stroke-width="1.5" fill="none"/>
+        <path d="M126 184 L114 196 M126 196 L126 188 M126 196 L118 196" stroke="url(#goldLinear)" stroke-width="1.5" fill="none"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- KING OF HEARTS -->
+  <div class="card-gilded">
+    <div class="card-inner">
+      <div class="index-badge index-top">
+        <span class="rank-glyph">K</span>
+        <svg class="suit-glyph" viewBox="0 0 100 100">
+          <path class="suit-heart-fill" d="M50 88 C20 65 5 45 5 28 A22 22 0 0 1 50 18 A22 22 0 0 1 95 28 C95 45 80 65 50 88 Z" />
+        </svg>
+      </div>
+
+      <div class="art-layer">
+        <svg viewBox="0 0 140 210" style="width:100%; height:100%;">
+          <defs>
+            <radialGradient id="redGlow" cx="50%" cy="30%" r="60%">
+              <stop offset="0%" stop-color="#7f1d1d" stop-opacity="0.6"/>
+              <stop offset="100%" stop-color="#090b10" stop-opacity="0.1"/>
+            </radialGradient>
+          </defs>
+          <rect width="140" height="210" fill="url(#redGlow)" />
+          <path d="M10 210 C15 130 30 110 70 110 C110 110 125 130 130 210 Z" fill="#450a0a"/>
+          <path d="M25 210 C35 140 50 120 70 120 C90 120 105 140 115 210 Z" fill="#e2e8f0" stroke="#94a3b8" stroke-width="1.5"/>
+          <line x1="125" y1="50" x2="60" y2="185" stroke="#38bdf8" stroke-width="4" stroke-linecap="round"/>
+          <line x1="125" y1="50" x2="60" y2="185" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round"/>
+          <path d="M48 60 L45 35 L58 48 L70 30 L82 48 L95 35 L92 60 Z" fill="url(#goldLinear)" stroke="#92400e" stroke-width="1"/>
+          <path d="M52 60 C52 48 60 40 70 40 C80 40 88 48 88 60 C88 80 78 95 70 95 C62 95 52 80 52 60 Z" fill="#fed7aa"/>
+          <path d="M46 65 C44 95 55 115 70 115 C85 115 96 95 94 65 Z" fill="#3e2723"/>
+        </svg>
+      </div>
+
+      <div class="art-vignette"></div>
+
+      <svg class="filigree-frame" viewBox="0 0 132 202">
+        <rect x="2" y="2" width="128" height="198" rx="6" fill="none" stroke="url(#goldLinear)" stroke-width="1.2" stroke-dasharray="6 2 2 2"/>
+        <path d="M6 18 L18 6 M6 6 L6 14 M6 6 L14 6" stroke="url(#goldLinear)" stroke-width="1.5" fill="none"/>
+        <path d="M126 18 L114 6 M126 6 L126 14 M126 6 L118 6" stroke="url(#goldLinear)" stroke-width="1.5" fill="none"/>
+        <path d="M6 184 L18 196 M6 196 L6 188 M6 196 L14 196" stroke="url(#goldLinear)" stroke-width="1.5" fill="none"/>
+        <path d="M126 184 L114 196 M126 196 L126 188 M126 196 L118 196" stroke="url(#goldLinear)" stroke-width="1.5" fill="none"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- QUEEN OF SPADES -->
+  <div class="card-gilded">
+    <div class="card-inner">
+      <div class="index-badge index-top">
+        <span class="rank-glyph">Q</span>
+        <svg class="suit-glyph" viewBox="0 0 100 100">
+          <path class="suit-gold-fill" d="M50 15 C50 15 88 50 88 68 C88 80 78 86 66 86 C54 86 51 78 50 74 C49 78 46 86 34 86 C22 86 12 80 12 68 C12 50 50 15 50 15 Z" />
+          <path class="suit-gold-fill" d="M44 78 L38 94 L62 94 L56 78 Z" />
+        </svg>
+      </div>
+
+      <div class="art-layer">
+        <svg viewBox="0 0 140 210" style="width:100%; height:100%;">
+          <circle cx="108" cy="90" r="14" fill="#c084fc" opacity="0.6"/>
+          <circle cx="108" cy="90" r="7" fill="#fdf4ff" opacity="0.9"/>
+          <path d="M20 210 C25 150 45 125 70 125 C95 125 115 150 120 210 Z" fill="#2e1065"/>
+          <path d="M35 210 C45 160 55 135 70 135 C85 135 95 160 105 210 Z" fill="#fdf2f8" stroke="#f472b6" stroke-width="1"/>
+          <path d="M50 52 L48 30 L58 40 L70 22 L82 40 L92 30 L90 52 Z" fill="url(#goldLinear)" stroke="#4c1d95" stroke-width="1"/>
+          <path d="M30 65 C20 100 25 140 40 160 C30 130 35 90 48 70 Z" fill="#1c1917"/>
+          <path d="M110 65 C120 100 115 140 100 160 C110 130 105 90 92 70 Z" fill="#1c1917"/>
+          <path d="M52 56 C52 42 60 36 70 36 C80 36 88 42 88 56 C88 74 78 84 70 84 C62 84 52 74 52 56 Z" fill="#ffedd5"/>
+        </svg>
+      </div>
+
+      <div class="art-vignette"></div>
+
+      <svg class="filigree-frame" viewBox="0 0 132 202">
+        <rect x="2" y="2" width="128" height="198" rx="6" fill="none" stroke="url(#goldLinear)" stroke-width="1.2" stroke-dasharray="6 2 2 2"/>
+        <path d="M6 18 L18 6 M6 6 L6 14 M6 6 L14 6" stroke="url(#goldLinear)" stroke-width="1.5" fill="none"/>
+        <path d="M126 18 L114 6 M126 6 L126 14 M126 6 L118 6" stroke="url(#goldLinear)" stroke-width="1.5" fill="none"/>
+        <path d="M6 184 L18 196 M6 196 L6 188 M6 196 L14 196" stroke="url(#goldLinear)" stroke-width="1.5" fill="none"/>
+        <path d="M126 184 L114 196 M126 196 L126 188 M126 196 L118 196" stroke="url(#goldLinear)" stroke-width="1.5" fill="none"/>
+      </svg>
+    </div>
+  </div>
+
+  <!-- JACK OF DIAMONDS -->
+  <div class="card-gilded">
+    <div class="card-inner">
+      <div class="index-badge index-top">
+        <span class="rank-glyph">J</span>
+        <svg class="suit-glyph" viewBox="0 0 100 100">
+          <polygon class="suit-diamond-fill" points="50,10 88,50 50,90 12,50" />
+        </svg>
+      </div>
+
+      <div class="art-layer">
+        <svg viewBox="0 0 140 210" style="width:100%; height:100%;">
+          <line x1="110" y1="130" x2="118" y2="190" stroke="#cbd5e1" stroke-width="3" stroke-linecap="round"/>
+          <line x1="102" y1="145" x2="118" y2="145" stroke="url(#goldLinear)" stroke-width="2"/>
+          <path d="M22 210 C26 145 40 125 70 125 C100 125 114 145 118 210 Z" fill="#5c1d1d"/>
+          <path d="M35 210 L45 138 L95 138 L105 210 Z" fill="#78350f" stroke="#451a03" stroke-width="1.5"/>
+          <path d="M52 54 C52 42 60 36 70 36 C80 36 88 42 88 54 C88 74 78 82 70 82 C62 82 52 74 52 54 Z" fill="#fed7aa"/>
+          <path d="M44 48 C42 28 58 24 70 24 C84 24 96 28 94 48 C88 40 82 42 78 40 C70 38 60 42 54 44 Z" fill="#451a03"/>
+        </svg>
+      </div>
+
+      <div class="art-vignette"></div>
+
+      <svg class="filigree-frame" viewBox="0 0 132 202">
+        <rect x="2" y="2" width="128" height="198" rx="6" fill="none" stroke="url(#goldLinear)" stroke-width="1.2" stroke-dasharray="6 2 2 2"/>
+        <path d="M6 18 L18 6 M6 6 L6 14 M6 6 L14 6" stroke="url(#goldLinear)" stroke-width="1.5" fill="none"/>
+        <path d="M126 18 L114 6 M126 6 L126 14 M126 6 L118 6" stroke="url(#goldLinear)" stroke-width="1.5" fill="none"/>
+        <path d="M6 184 L18 196 M6 196 L6 188 M6 196 L14 196" stroke="url(#goldLinear)" stroke-width="1.5" fill="none"/>
+        <path d="M126 184 L114 196 M126 196 L126 188 M126 196 L118 196" stroke="url(#goldLinear)" stroke-width="1.5" fill="none"/>
+      </svg>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

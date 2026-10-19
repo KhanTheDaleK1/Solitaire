@@ -21,13 +21,45 @@
     <link rel="icon" type="image/svg+xml" href="/icons/icon.svg" />
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />
 
-    <!-- Google Fonts: Plus Jakarta Sans -->
+    <!-- Google Fonts: Plus Jakarta Sans & Cinzel (Dark Fantasy Gilded Serif) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/src/style.css" />
   </head>
-  <body class="theme-classic deck-classic back-blue-lattice">
+  <body class="theme-classic deck-fantasy back-blue-lattice">
+    <!-- Shared SVG Metallic Gold & Ambient Glow Gradients for Dark Fantasy Gilded Cards -->
+    <svg width="0" height="0" style="position:absolute; width:0; height:0; pointer-events:none;" aria-hidden="true">
+      <defs>
+        <linearGradient id="goldLinear" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#fce082" />
+          <stop offset="50%" stop-color="#d4af37" />
+          <stop offset="100%" stop-color="#8c6d23" />
+        </linearGradient>
+        <radialGradient id="nebula" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.55" />
+          <stop offset="45%" stop-color="#1e3a8a" stop-opacity="0.32" />
+          <stop offset="100%" stop-color="#090b10" stop-opacity="0" />
+        </radialGradient>
+        <radialGradient id="rubyNebula" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#f43f5e" stop-opacity="0.5" />
+          <stop offset="45%" stop-color="#7f1d1d" stop-opacity="0.3" />
+          <stop offset="100%" stop-color="#090b10" stop-opacity="0" />
+        </radialGradient>
+        <radialGradient id="redGlow" cx="50%" cy="30%" r="60%">
+          <stop offset="0%" stop-color="#7f1d1d" stop-opacity="0.65" />
+          <stop offset="100%" stop-color="#090b10" stop-opacity="0.1" />
+        </radialGradient>
+        <radialGradient id="sorceressGlow" cx="50%" cy="30%" r="60%">
+          <stop offset="0%" stop-color="#581c87" stop-opacity="0.6" />
+          <stop offset="100%" stop-color="#090b10" stop-opacity="0.1" />
+        </radialGradient>
+        <radialGradient id="rogueGlow" cx="50%" cy="35%" r="60%">
+          <stop offset="0%" stop-color="#78350f" stop-opacity="0.55" />
+          <stop offset="100%" stop-color="#090b10" stop-opacity="0.1" />
+        </radialGradient>
+      </defs>
+    </svg>
     <div id="app" class="app-container">
       <!-- Top Navigation & Scoreboard -->
       <header class="game-header">
@@ -288,11 +320,11 @@
               <span class="setting-desc">Court illustrations, typography & card stock</span>
             </div>
             <div class="segmented-control segmented-5">
-              <button class="segment-btn active" data-deck="classic">Classic</button>
+              <button class="segment-btn active" data-deck="fantasy">Gilded 💎</button>
+              <button class="segment-btn" data-deck="classic">Classic</button>
               <button class="segment-btn" data-deck="modern">Big Index</button>
               <button class="segment-btn" data-deck="midnight">Dark</button>
               <button class="segment-btn" data-deck="crown">Crown</button>
-              <button class="segment-btn" data-deck="fantasy">Fantasy 💎</button>
             </div>
           </div>
 
