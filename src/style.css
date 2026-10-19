@@ -82,33 +82,35 @@ html, body {
   padding-bottom: var(--safe-bottom);
 }
 
-/* Header & Stats Bar */
+/* Header & Stats Bar (Optimized for Google Pixel 9 Pro XL 412px-448px width) */
 .game-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 8px 14px;
+  padding: 8px 10px;
+  gap: 6px;
   background: var(--header-bg);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
   z-index: 50;
-  min-height: 52px;
+  min-height: 50px;
 }
 
 .header-left, .header-right {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 5px;
+  flex-shrink: 0;
 }
 
 .icon-btn {
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.12);
   color: var(--text-main);
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -122,14 +124,14 @@ html, body {
 }
 
 .icon {
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
 }
 
 .header-stats {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 9px;
 }
 
 .stat-badge {
@@ -140,14 +142,14 @@ html, body {
 }
 
 .stat-label {
-  font-size: 9px;
+  font-size: 8.5px;
   font-weight: 700;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   color: var(--text-muted);
 }
 
 .stat-value {
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 800;
   color: #ffffff;
   font-variant-numeric: tabular-nums;
@@ -157,14 +159,14 @@ html, body {
 .auth-btn {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   background: rgba(255, 255, 255, 0.1);
   border: 1px solid rgba(255, 255, 255, 0.15);
   color: var(--text-main);
-  padding: 4px 10px 4px 6px;
+  padding: 4px 8px 4px 5px;
   border-radius: 20px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 600;
   transition: all 0.15s ease;
 }
@@ -175,8 +177,8 @@ html, body {
 }
 
 .avatar-placeholder, .auth-btn img {
-  width: 24px;
-  height: 24px;
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   display: flex;
   align-items: center;
@@ -186,17 +188,17 @@ html, body {
 }
 
 .avatar-placeholder .icon {
-  width: 14px;
-  height: 14px;
+  width: 13px;
+  height: 13px;
 }
 
-/* Playfield */
+/* Playfield (Edge-to-edge card width maximized for Pixel 9 Pro XL 412x915 20:9 screen) */
 .playfield {
   flex: 1;
   display: flex;
   flex-direction: column;
-  padding: 10px 10px 6px 10px;
-  gap: 12px;
+  padding: 12px 6px 8px 6px;
+  gap: 14px;
   overflow: hidden;
   max-width: 900px;
   margin: 0 auto;
@@ -209,7 +211,7 @@ html, body {
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  gap: 8px;
+  gap: 4.5px;
   transition: flex-direction 0.2s ease;
 }
 
@@ -227,7 +229,7 @@ body.left-handed .foundations-area {
 
 .deck-area {
   display: flex;
-  gap: 8px;
+  gap: 4.5px;
 }
 
 .top-spacer {
@@ -236,16 +238,16 @@ body.left-handed .foundations-area {
 
 .foundations-area {
   display: flex;
-  gap: 8px;
+  gap: 4.5px;
 }
 
-/* General Piles */
+/* General Piles (7 columns across 412px Pixel 9 Pro XL = ~53.3px x 76.7px cards) */
 .pile {
   position: relative;
-  width: calc((100vw - 80px) / 7);
-  max-width: 90px;
-  min-width: 42px;
-  aspect-ratio: var(--card-aspect);
+  width: calc((100vw - 39px) / 7);
+  max-width: 96px;
+  min-width: 44px;
+  aspect-ratio: 0.695;
   border-radius: var(--card-radius);
   transition: transform 0.1s ease;
 }
@@ -276,7 +278,7 @@ body.left-handed .foundations-area {
   display: flex;
   justify-content: space-between;
   width: 100%;
-  gap: 8px;
+  gap: 4.5px;
   position: relative;
   overflow: visible;
 }
@@ -502,52 +504,61 @@ body.left-handed .foundations-area {
   white-space: nowrap;
 }
 
-/* 3D Card Flip, Deal, and Move Animations */
+/* Clean, Smooth 3D Card Flip, Deal, Move, and Reject Micro-Shake Animations */
 @keyframes cardFlip3D {
   0% {
-    transform: perspective(700px) rotateY(180deg) scale(1.06);
+    transform: perspective(900px) rotateY(-180deg) translateY(0) scale(1);
   }
-  55% {
-    transform: perspective(700px) rotateY(60deg) scale(1.1);
+  50% {
+    transform: perspective(900px) rotateY(-90deg) translateY(-3px) scale(1.03);
   }
   100% {
-    transform: perspective(700px) rotateY(0deg) scale(1);
+    transform: perspective(900px) rotateY(0deg) translateY(0) scale(1);
   }
 }
 
 @keyframes cardDealIn {
   0% {
     opacity: 0;
-    transform: translate3d(-60px, -90px, 0) scale(0.75) rotate(-8deg);
+    transform: translate3d(-40px, -60px, 0) scale(0.85);
   }
   100% {
     opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1) rotate(0deg);
+    transform: translate3d(0, 0, 0) scale(1);
   }
 }
 
 @keyframes cardPlacePop {
   0% {
-    transform: scale(1.09);
+    transform: scale(1.05);
   }
   100% {
     transform: scale(1);
   }
 }
 
+@keyframes cardRejectShake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+
+.card.card-reject-shake {
+  animation: cardRejectShake 0.18s ease-in-out;
+}
+
 .card.is-dealing {
-  animation: cardDealIn 0.28s cubic-bezier(0.2, 0.9, 0.3, 1) backwards;
+  animation: cardDealIn 0.24s cubic-bezier(0.22, 1, 0.36, 1) backwards;
 }
 
 .card.is-moving {
-  animation: cardPlacePop 0.18s cubic-bezier(0.22, 1, 0.36, 1);
+  animation: cardPlacePop 0.16s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .card.is-flipping {
   background: transparent !important;
   border-color: transparent !important;
   box-shadow: none !important;
-  perspective: 700px;
   overflow: visible;
 }
 
@@ -556,7 +567,9 @@ body.left-handed .foundations-area {
   height: 100%;
   position: relative;
   transform-style: preserve-3d;
-  animation: cardFlip3D 0.34s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  -webkit-transform-style: preserve-3d;
+  transform-origin: center center;
+  animation: cardFlip3D 0.24s cubic-bezier(0.25, 0.8, 0.25, 1) forwards;
 }
 
 .card-flip-front,
@@ -576,6 +589,7 @@ body.left-handed .foundations-area {
 .card-flip-front {
   background: var(--card-bg);
   border: 1px solid #e2c076;
+  transform: rotateY(0deg);
 }
 
 .card-flip-back {
@@ -1531,17 +1545,6 @@ input:checked + .toggle-slider:before {
   height: 100%;
   pointer-events: none;
   z-index: 900;
-}
-
-/* Invalid Move Flash Effect */
-@keyframes flash-error {
-  0% { filter: invert(0.25) brightness(1.2); }
-  50% { filter: invert(0.35) brightness(1.3); }
-  100% { filter: none; }
-}
-
-body.flash-invalid {
-  animation: flash-error 90ms ease-out;
 }
 
 /* Daily Challenge Crown Button & Banner */

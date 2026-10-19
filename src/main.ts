@@ -754,8 +754,9 @@ class SolitaireApp {
         const cardEl = CardRenderer.createCardElement(card, false, {
           isFlipping: isNewlyDrawn
         });
-        const offset = (i - startIndex) * (window.innerWidth < 640 ? 12 : 16);
-        cardEl.style.transform = `translateX(${offset}px)`;
+        const offset = (i - startIndex) * (window.innerWidth < 640 ? 14 : 18);
+        cardEl.style.left = `${offset}px`;
+        cardEl.style.zIndex = `${i - startIndex + 1}`;
 
         if (isTop) {
           this.dragDrop.registerCard(cardEl, card, { type: 'waste', index: 0 });
@@ -788,10 +789,12 @@ class SolitaireApp {
       }
     }
 
-    // 4. Tableau Columns
+    // 4. Tableau Columns (Optimized for Google Pixel 9 Pro XL 20:9 tall viewport & responsive compression)
     const isMobile = window.innerWidth < 640;
-    const downOffset = isMobile ? 11 : 14;
-    const upOffset = isMobile ? 26 : 32;
+    const isTallViewport = window.innerHeight >= 820; // Pixel 9 Pro XL (~915px CSS height)
+    const baseDownOffset = isMobile ? (isTallViewport ? 13 : 11) : 15;
+    const baseUpOffset = isMobile ? (isTallViewport ? 29 : 25) : 32;
+    const maxColHeight = Math.max(280, window.innerHeight - 265);
 
     for (let colIdx = 0; colIdx < 7; colIdx++) {
       const colEl = this.tableauEls[colIdx];
@@ -799,13 +802,21 @@ class SolitaireApp {
       const cards = state.tableau[colIdx];
       let currentTop = 0;
 
+      // Dynamically scale offsets if a column gets very long so cards never clip into bottom toolbar
+      const downCount = cards.filter(c => !c.faceUp).length;
+      const upCount = Math.max(0, cards.filter(c => c.faceUp).length - 1);
+      const rawSpan = downCount * baseDownOffset + upCount * baseUpOffset;
+      const scale = rawSpan > maxColHeight ? maxColHeight / rawSpan : 1;
+      const downOffset = Math.max(8, Math.floor(baseDownOffset * scale));
+      const upOffset = Math.max(19, Math.floor(baseUpOffset * scale));
+
       cards.forEach((card, rowIdx) => {
         const isFlippedNow = flippedSet.has(card.id);
         const isMovedNow = movedSet.has(card.id);
         const cardEl = CardRenderer.createCardElement(card, false, {
           isFlipping: isFlippedNow,
           isDealing: isDealAction,
-          dealDelayMs: isDealAction ? (colIdx * 45 + rowIdx * 20) : 0,
+          dealDelayMs: isDealAction ? (colIdx * 38 + rowIdx * 16) : 0,
           isMoving: isMovedNow && !isFlippedNow
         });
         cardEl.style.top = `${currentTop}px`;

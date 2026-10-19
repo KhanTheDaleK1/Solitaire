@@ -166,6 +166,7 @@ export class DragDropManager {
         }
       } else {
         this.sound.playInvalid();
+        this.shakeRejectedCards(session.sourceElements);
       }
       return;
     }
@@ -211,7 +212,17 @@ export class DragDropManager {
 
     // Drop failed or invalid
     this.sound.playInvalid();
+    this.shakeRejectedCards(session.sourceElements);
   };
+
+  private shakeRejectedCards(elements: HTMLElement[]): void {
+    elements.forEach((el) => {
+      el.classList.remove('card-reject-shake');
+      void el.offsetWidth;
+      el.classList.add('card-reject-shake');
+      setTimeout(() => el.classList.remove('card-reject-shake'), 220);
+    });
+  }
 
   private onPointerCancel = (): void => {
     if (this.currentSession) {
