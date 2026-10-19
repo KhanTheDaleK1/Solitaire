@@ -1,11 +1,23 @@
-const CACHE_NAME = 'solitaire-pwa-v9';
+const CACHE_NAME = 'solitaire-pwa-v10';
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
   '/manifest.webmanifest',
   '/icons/icon.svg',
   '/icons/icon-192.png',
-  '/icons/icon-512.png'
+  '/icons/icon-512.png',
+  '/cards/queen-hearts.jpg',
+  '/cards/queen-spades.jpg',
+  '/cards/queen-diamonds.jpg',
+  '/cards/queen-clubs.jpg',
+  '/cards/king-hearts.jpg',
+  '/cards/king-spades.jpg',
+  '/cards/king-diamonds.jpg',
+  '/cards/king-clubs.jpg',
+  '/cards/jack-hearts.jpg',
+  '/cards/jack-spades.jpg',
+  '/cards/jack-diamonds.jpg',
+  '/cards/jack-clubs.jpg'
 ];
 
 self.addEventListener('install', (event) => {
