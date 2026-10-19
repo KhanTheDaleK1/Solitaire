@@ -790,8 +790,8 @@ class SolitaireApp {
 
     // 4. Tableau Columns
     const isMobile = window.innerWidth < 640;
-    const downOffset = isMobile ? 12 : 16;
-    const upOffset = isMobile ? 24 : 30;
+    const downOffset = isMobile ? 11 : 14;
+    const upOffset = isMobile ? 26 : 32;
 
     for (let colIdx = 0; colIdx < 7; colIdx++) {
       const colEl = this.tableauEls[colIdx];
@@ -809,6 +809,7 @@ class SolitaireApp {
           isMoving: isMovedNow && !isFlippedNow
         });
         cardEl.style.top = `${currentTop}px`;
+        cardEl.style.zIndex = `${rowIdx + 1}`;
 
         if (card.faceUp) {
           this.dragDrop.registerCard(cardEl, card, { type: 'tableau', index: colIdx });
