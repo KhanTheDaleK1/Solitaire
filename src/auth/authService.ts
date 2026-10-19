@@ -11,6 +11,12 @@ import {
 } from 'firebase/auth';
 import { AuthUser } from '../game/types';
 
+export interface BackendAuthStatus {
+  githubConfigured: boolean;
+  googleConfigured: boolean;
+  callbackUrl: string;
+}
+
 export class AuthService {
   private app: FirebaseApp | null = null;
   private auth: Auth | null = null;
@@ -19,7 +25,38 @@ export class AuthService {
   public isFirebaseConfigured: boolean = false;
 
   constructor() {
+    this.loadSavedUser();
     this.initFirebase();
+    this.initOAuthMessageListener();
+  }
+
+  private loadSavedUser(): void {
+    const raw = localStorage.getItem('solitaire_auth_user');
+    if (raw) {
+      try {
+        this.currentUser = JSON.parse(raw);
+      } catch {
+        this.currentUser = null;
+      }
+    }
+  }
+
+  private saveAuthUser(user: AuthUser | null): void {
+    if (user) {
+      localStorage.setItem('solitaire_auth_user', JSON.stringify(user));
+    } else {
+      localStorage.removeItem('solitaire_auth_user');
+    }
+  }
+
+  private initOAuthMessageListener(): void {
+    window.addEventListener('message', (event) => {
+      if (event.data?.type === 'SOLITAIRE_AUTH_SUCCESS' && event.data.user) {
+        this.currentUser = event.data.user;
+        this.saveAuthUser(this.currentUser);
+        this.notifySubscribers();
+      }
+    });
   }
 
   private initFirebase(): void {
@@ -27,8 +64,8 @@ export class AuthService {
     const authDomain = import.meta.env.VITE_FIREBASE_AUTH_DOMAIN;
     const projectId = import.meta.env.VITE_FIREBASE_PROJECT_ID;
 
-    // Check if real credentials are provided
-    if (apiKey && apiKey !== 'your_firebase_api_key' && projectId) {
+    // Check if real Firebase credentials are provided
+    if (apiKey && apiKey !== 'your_firebase_api_key' && projectId && projectId !== 'solitare-your-project') {
       try {
         const firebaseConfig = {
           apiKey,
@@ -54,26 +91,18 @@ export class AuthService {
               photoURL: user.photoURL,
               provider
             };
-          } else {
-            this.loadLocalGuest();
+            this.saveAuthUser(this.currentUser);
           }
           this.notifySubscribers();
         });
         return;
       } catch (err) {
-        console.warn('Firebase init error, using guest mode:', err);
+        console.warn('Firebase init error, using direct/guest mode:', err);
       }
     }
 
-    // Default to Guest Mode
     this.isFirebaseConfigured = false;
-    this.loadLocalGuest();
     this.notifySubscribers();
-  }
-
-  private loadLocalGuest(): void {
-    localStorage.removeItem('solitaire_guest_user');
-    this.currentUser = null;
   }
 
   public subscribe(callback: (user: AuthUser | null) => void): void {
@@ -91,6 +120,35 @@ export class AuthService {
     return this.currentUser;
   }
 
+  public async getBackendStatus(): Promise<BackendAuthStatus> {
+    try {
+      const res = await fetch('/api/auth/status');
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch {
+      // Fallback
+    }
+    return {
+      githubConfigured: false,
+      googleConfigured: false,
+      callbackUrl: `${window.location.origin}/api/auth/github/callback`
+    };
+  }
+
+  public async saveBackendCredentials(clientId: string, clientSecret: string): Promise<boolean> {
+    const res = await fetch('/api/auth/configure', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        githubClientId: clientId,
+        githubClientSecret: clientSecret
+      })
+    });
+    const data = await res.json();
+    return Boolean(data.success);
+  }
+
   public async signInGoogle(): Promise<AuthUser> {
     if (this.isFirebaseConfigured && this.auth) {
       const provider = new GoogleAuthProvider();
@@ -105,14 +163,16 @@ export class AuthService {
         photoURL: user.photoURL,
         provider: 'google'
       };
+      this.saveAuthUser(this.currentUser);
       this.notifySubscribers();
       return this.currentUser;
     }
 
-    throw new Error('Google Sign-In requires Firebase OAuth credentials to be configured in .env. Guest play is active.');
+    throw new Error('Google Sign-In requires Firebase credentials to be configured in .env.');
   }
 
   public async signInGitHub(): Promise<AuthUser> {
+    // 1. Try Firebase if explicitly configured
     if (this.isFirebaseConfigured && this.auth) {
       const provider = new GithubAuthProvider();
       provider.addScope('read:user');
@@ -125,18 +185,71 @@ export class AuthService {
         photoURL: user.photoURL,
         provider: 'github'
       };
+      this.saveAuthUser(this.currentUser);
       this.notifySubscribers();
       return this.currentUser;
     }
 
-    throw new Error('GitHub Sign-In requires Firebase OAuth credentials to be configured in .env. Guest play is active.');
+    // 2. Direct server-side GitHub OAuth
+    const status = await this.getBackendStatus();
+    if (!status.githubConfigured) {
+      throw new Error('CONFIG_NEEDED');
+    }
+
+    return new Promise((resolve, reject) => {
+      const popup = window.open('/api/auth/github', 'solitaire_oauth', 'width=600,height=700,scrollbars=yes');
+      if (!popup) {
+        reject(new Error('Popup blocked. Please allow popups for this site.'));
+        return;
+      }
+
+      const handler = (event: MessageEvent) => {
+        if (event.data?.type === 'SOLITAIRE_AUTH_SUCCESS' && event.data.user) {
+          window.removeEventListener('message', handler);
+          this.currentUser = event.data.user;
+          this.saveAuthUser(this.currentUser);
+          this.notifySubscribers();
+          resolve(this.currentUser!);
+        }
+      };
+
+      window.addEventListener('message', handler);
+
+      const checkInterval = setInterval(() => {
+        if (popup.closed) {
+          clearInterval(checkInterval);
+          window.removeEventListener('message', handler);
+          if (this.currentUser) {
+            resolve(this.currentUser);
+          } else {
+            reject(new Error('Sign-in cancelled or window closed.'));
+          }
+        }
+      }, 500);
+    });
+  }
+
+  public signInWithUsername(username: string): AuthUser {
+    const trimmed = username.trim().replace(/^@/, '');
+    if (!trimmed) throw new Error('Please enter a username.');
+
+    this.currentUser = {
+      uid: `gh_${trimmed}`,
+      displayName: trimmed,
+      email: `${trimmed}@users.noreply.github.com`,
+      photoURL: `https://github.com/${encodeURIComponent(trimmed)}.png`,
+      provider: 'github'
+    };
+    this.saveAuthUser(this.currentUser);
+    this.notifySubscribers();
+    return this.currentUser;
   }
 
   public async signOut(): Promise<void> {
     if (this.isFirebaseConfigured && this.auth) {
       await signOut(this.auth);
     }
-    localStorage.removeItem('solitaire_guest_user');
+    this.saveAuthUser(null);
     this.currentUser = null;
     this.notifySubscribers();
   }

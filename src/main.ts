@@ -234,7 +234,7 @@ class SolitaireApp {
       });
     });
 
-    // OAuth buttons
+    // OAuth & Profile buttons
     document.getElementById('btn-google-login')?.addEventListener('click', async () => {
       try {
         await this.auth.signInGoogle();
@@ -247,7 +247,67 @@ class SolitaireApp {
       try {
         await this.auth.signInGitHub();
       } catch (err) {
-        alert('GitHub Sign-In: ' + (err as Error).message);
+        if ((err as Error).message === 'CONFIG_NEEDED') {
+          const fields = document.getElementById('oauth-setup-fields');
+          fields?.classList.remove('hidden');
+          fields?.scrollIntoView({ behavior: 'smooth' });
+          document.getElementById('setup-client-id')?.focus();
+        } else {
+          alert('GitHub Sign-In: ' + (err as Error).message);
+        }
+      }
+    });
+
+    // Quick GitHub username profile
+    document.getElementById('btn-save-username')?.addEventListener('click', () => {
+      const input = document.getElementById('input-github-username') as HTMLInputElement;
+      const username = input?.value.trim();
+      if (!username) {
+        alert('Please enter your GitHub username.');
+        return;
+      }
+      try {
+        this.auth.signInWithUsername(username);
+        this.sound.playWinFanfare();
+      } catch (err) {
+        alert((err as Error).message);
+      }
+    });
+
+    // Toggle OAuth setup fields
+    document.getElementById('btn-toggle-oauth-setup')?.addEventListener('click', () => {
+      document.getElementById('oauth-setup-fields')?.classList.toggle('hidden');
+    });
+
+    // Save OAuth credentials to .env
+    document.getElementById('btn-save-oauth-config')?.addEventListener('click', async () => {
+      const clientIdInput = document.getElementById('setup-client-id') as HTMLInputElement;
+      const secretInput = document.getElementById('setup-client-secret') as HTMLInputElement;
+      const feedback = document.getElementById('setup-save-feedback');
+
+      const clientId = clientIdInput?.value.trim();
+      const secret = secretInput?.value.trim();
+
+      if (!clientId || !secret) {
+        alert('Please enter both GitHub Client ID and Client Secret.');
+        return;
+      }
+
+      const success = await this.auth.saveBackendCredentials(clientId, secret);
+      if (success) {
+        feedback?.classList.remove('hidden');
+        setTimeout(() => feedback?.classList.add('hidden'), 3500);
+        alert('GitHub OAuth credentials saved to .env! You can now click "Continue with GitHub".');
+      } else {
+        alert('Failed to save credentials.');
+      }
+    });
+
+    // Fetch and populate backend OAuth callback URL
+    this.auth.getBackendStatus().then(status => {
+      const urlEl = document.getElementById('setup-callback-url');
+      if (urlEl && status.callbackUrl) {
+        urlEl.textContent = status.callbackUrl;
       }
     });
 
