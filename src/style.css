@@ -296,27 +296,34 @@ body.left-handed .foundations-area {
   background: #1034a6;
   border: 1.5px solid #ffffff;
   overflow: hidden;
+  box-sizing: border-box;
 }
 
 .card-back {
   width: 100%;
   height: 100%;
   border-radius: calc(var(--card-radius) - 1px);
-  background: 
-    repeating-linear-gradient(45deg, #1034a6, #1034a6 4px, #0b2575 4px, #0b2575 8px),
-    repeating-linear-gradient(-45deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.08) 4px, transparent 4px, transparent 8px);
-  border: 2px solid #ffffff;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-sizing: border-box;
 }
 
 .card-back-pattern {
-  width: 80%;
-  height: 80%;
-  border: 1.5px solid rgba(255, 255, 255, 0.45);
+  width: 100%;
+  height: 100%;
   border-radius: 4px;
-  background: rgba(0, 0, 0, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.card-back-emblem {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  user-select: none;
 }
 
 .card.face-up {
@@ -461,24 +468,249 @@ body.left-handed .foundations-area {
   animation: autoFinishPulse 1.6s infinite ease-in-out;
 }
 
-/* Card Faces Styles */
-body.card-faces-classic .card-center-suit {
-  font-family: 'Times New Roman', serif;
+/* ==========================================================================
+   Solitaire Card Design System (4 Tailored Deck Themes)
+   ========================================================================== */
+
+/* 1. Classic MobilityWare (Default) */
+body.deck-classic .card.face-up,
+body:not([class*="deck-"]) .card.face-up {
+  background: #faf8f5;
+  border: 1px solid #d1d5db;
+  font-family: Georgia, 'Times New Roman', serif;
+}
+body.deck-classic .card.face-up.color-red,
+body:not([class*="deck-"]) .card.face-up.color-red {
+  color: #dc2626;
+}
+body.deck-classic .card.face-up.color-black,
+body:not([class*="deck-"]) .card.face-up.color-black {
+  color: #1e293b;
+}
+body.deck-classic .corner-rank,
+body:not([class*="deck-"]) .corner-rank {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 14px;
+  font-weight: 700;
+}
+body.deck-classic .corner-suit,
+body:not([class*="deck-"]) .corner-suit {
+  font-size: 13px;
+  margin-top: 1px;
+}
+body.deck-classic .card-center-suit,
+body:not([class*="deck-"]) .card-center-suit {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: 26px;
+}
+body.deck-classic .card-royal-badge .royal-letter,
+body:not([class*="deck-"]) .card-royal-badge .royal-letter {
+  font-family: Georgia, 'Times New Roman', serif;
+  font-weight: 700;
+}
+body.deck-classic .card.face-down,
+body:not([class*="deck-"]) .card.face-down {
+  background: #1e3a8a;
+  border: 1.5px solid #ffffff;
+  padding: 3px;
+}
+body.deck-classic .card-back,
+body:not([class*="deck-"]) .card-back {
+  background: #1e3a8a;
+  border: 1.5px solid #ffffff;
+  border-radius: 5px;
+  padding: 2px;
+}
+body.deck-classic .card-back-pattern,
+body:not([class*="deck-"]) .card-back-pattern {
+  width: 100%;
+  height: 100%;
+  border-radius: 4px;
+  border: 1px dashed rgba(255, 255, 255, 0.45);
+  background: repeating-linear-gradient(45deg, #1d4ed8, #1d4ed8 4px, #1e3a8a 4px, #1e3a8a 8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+body.deck-classic .card-back-emblem::after,
+body:not([class*="deck-"]) .card-back-emblem::after {
+  content: '❖';
+  font-size: 16px;
+  color: rgba(255, 255, 255, 0.9);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.5);
 }
 
-body.card-faces-classic .corner-rank {
-  font-family: 'Times New Roman', serif;
-  font-weight: 800;
-}
-
-body.card-faces-modern .corner-rank {
+/* 2. Modern High-Visibility (Accessibility & Legibility) */
+body.deck-modern .card.face-up {
+  background: #ffffff;
+  border: 1.5px solid #0f172a;
   font-family: 'Plus Jakarta Sans', sans-serif;
+}
+body.deck-modern .card.face-up.color-red {
+  color: #e11d48;
+}
+body.deck-modern .card.face-up.color-black {
+  color: #020617;
+}
+body.deck-modern .corner-rank {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 16px;
   font-weight: 800;
+  line-height: 0.9;
   letter-spacing: -0.04em;
 }
+body.deck-modern .corner-suit {
+  font-size: 14px;
+  margin-top: 2px;
+}
+body.deck-modern .card-center-suit {
+  font-size: 28px;
+  font-weight: 800;
+  filter: contrast(1.1);
+}
+body.deck-modern .card-royal-badge .royal-letter {
+  font-size: 20px;
+  font-weight: 800;
+}
+body.deck-modern .card.face-down {
+  background: #0f172a;
+  border: 1.5px solid #38bdf8;
+  padding: 3px;
+}
+body.deck-modern .card-back {
+  background: #0f172a;
+  border: 1.5px solid #38bdf8;
+  border-radius: 5px;
+  padding: 2px;
+}
+body.deck-modern .card-back-pattern {
+  width: 100%;
+  height: 100%;
+  border-radius: 4px;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  background: radial-gradient(circle at center, #1e293b 0%, #0f172a 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+body.deck-modern .card-back-emblem::after {
+  content: '✦';
+  font-size: 20px;
+  color: #38bdf8;
+  filter: drop-shadow(0 0 5px rgba(56, 189, 248, 0.65));
+}
 
-body.card-faces-modern .card-center-suit {
-  filter: contrast(1.15);
+/* 3. Midnight Velvet (OLED Dark Mode) */
+body.deck-midnight .card.face-up {
+  background: #18181b;
+  border: 1.5px solid #3f3f46;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+body.deck-midnight .card.face-up.color-red {
+  color: #fb7185;
+}
+body.deck-midnight .card.face-up.color-black {
+  color: #93c5fd;
+}
+body.deck-midnight .corner-rank {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+}
+body.deck-midnight .corner-suit {
+  font-size: 13px;
+  margin-top: 1px;
+}
+body.deck-midnight .card-center-suit {
+  font-size: 26px;
+  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.4));
+}
+body.deck-midnight .card-royal-badge .royal-letter {
+  font-weight: 700;
+}
+body.deck-midnight .card.face-down {
+  background: #27272a;
+  border: 1.5px solid #52525b;
+  padding: 3px;
+}
+body.deck-midnight .card-back {
+  background: #27272a;
+  border: 1.5px solid #52525b;
+  border-radius: 5px;
+  padding: 2px;
+}
+body.deck-midnight .card-back-pattern {
+  width: 100%;
+  height: 100%;
+  border-radius: 4px;
+  border: 1px dashed rgba(255, 255, 255, 0.25);
+  background: repeating-linear-gradient(-45deg, #27272a, #27272a 4px, #18181b 4px, #18181b 8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+body.deck-midnight .card-back-emblem::after {
+  content: '◆';
+  font-size: 18px;
+  color: #a1a1aa;
+}
+
+/* 4. Royal Crown Edition (Milestone & Collector Deck) */
+body.deck-crown .card.face-up {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border: 1.5px solid #d97706;
+  box-shadow: 0 4px 12px rgba(217, 119, 6, 0.3);
+  font-family: 'Plus Jakarta Sans', sans-serif;
+}
+body.deck-crown .card.face-up.color-red {
+  color: #b91c1c;
+}
+body.deck-crown .card.face-up.color-black {
+  color: #312e81;
+}
+body.deck-crown .corner-rank {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 800;
+}
+body.deck-crown .corner-suit {
+  font-size: 13px;
+  margin-top: 1px;
+}
+body.deck-crown .card-center-suit {
+  font-size: 26px;
+  filter: drop-shadow(0 1px 2px rgba(217, 119, 6, 0.2));
+}
+body.deck-crown .card-royal-badge .royal-letter {
+  font-weight: 800;
+  color: #b45309;
+}
+body.deck-crown .card.face-down {
+  background: linear-gradient(135deg, #78350f, #451a03);
+  border: 1.5px solid #fbbf24;
+  padding: 3px;
+}
+body.deck-crown .card-back {
+  background: linear-gradient(135deg, #78350f, #451a03);
+  border: 1.5px solid #fbbf24;
+  border-radius: 5px;
+  padding: 2px;
+}
+body.deck-crown .card-back-pattern {
+  width: 100%;
+  height: 100%;
+  border-radius: 4px;
+  border: 1px solid rgba(251, 191, 36, 0.5);
+  background: repeating-linear-gradient(45deg, rgba(251, 191, 36, 0.1), rgba(251, 191, 36, 0.1) 4px, transparent 4px, transparent 8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+body.deck-crown .card-back-emblem::after {
+  content: '👑';
+  font-size: 22px;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.5));
 }
 
 /* Modals & Backdrop */
@@ -599,6 +831,30 @@ body.card-faces-modern .card-center-suit {
 .segment-btn.active {
   background: var(--accent-gold);
   color: #000000;
+}
+
+.setting-item.setting-item-stacked {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.setting-item.setting-item-stacked .segmented-control {
+  width: 100%;
+}
+
+.segmented-control.segmented-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 3px;
+  width: 100%;
+}
+
+.segmented-4 .segment-btn {
+  padding: 8px 4px;
+  font-size: 11px;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .toggle-switch {

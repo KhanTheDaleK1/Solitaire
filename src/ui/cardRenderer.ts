@@ -12,7 +12,9 @@ export class CardRenderer {
     if (!card.faceUp) {
       el.innerHTML = `
         <div class="card-back">
-          <div class="card-back-pattern"></div>
+          <div class="card-back-pattern">
+            <span class="card-back-emblem"></span>
+          </div>
         </div>
       `;
       return el;

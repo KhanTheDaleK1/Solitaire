@@ -222,16 +222,18 @@ class SolitaireApp {
       });
     });
 
-    // Card Faces listeners (Classic / Modern)
-    document.querySelectorAll('[data-face]').forEach((btn) => {
+    // Deck Theme listeners (Classic / Modern / Midnight / Crown)
+    document.querySelectorAll('[data-deck]').forEach((btn) => {
       btn.addEventListener('click', (e) => {
-        document.querySelectorAll('[data-face]').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('[data-deck]').forEach(b => b.classList.remove('active'));
         const target = e.currentTarget as HTMLElement;
         target.classList.add('active');
-        const face = target.dataset.face || 'classic';
-        document.body.classList.remove('card-faces-classic', 'card-faces-modern');
-        document.body.classList.add(`card-faces-${face}`);
-        localStorage.setItem('solitaire_card_face', face);
+        const deck = target.dataset.deck || 'classic';
+        document.body.classList.remove('deck-classic', 'deck-modern', 'deck-midnight', 'deck-crown', 'card-faces-classic', 'card-faces-modern');
+        document.body.classList.add(`deck-${deck}`);
+        document.body.classList.add(`card-faces-${deck === 'modern' ? 'modern' : 'classic'}`);
+        localStorage.setItem('solitaire_card_style', deck);
+        localStorage.setItem('solitaire_card_face', deck === 'modern' ? 'modern' : 'classic');
       });
     });
 
@@ -249,14 +251,16 @@ class SolitaireApp {
       });
     }
 
-    // Theme pickers
+    // Theme pickers (Felt color)
     document.querySelectorAll('.theme-chip').forEach((chip) => {
       chip.addEventListener('click', (e) => {
         document.querySelectorAll('.theme-chip').forEach(c => c.classList.remove('active'));
         const target = e.currentTarget as HTMLElement;
         target.classList.add('active');
-        const theme = target.dataset.theme;
-        document.body.className = `theme-${theme}`;
+        const theme = target.dataset.theme || 'classic';
+        document.body.classList.remove('theme-classic', 'theme-royal', 'theme-crimson', 'theme-midnight');
+        document.body.classList.add(`theme-${theme}`);
+        localStorage.setItem('solitaire_theme', theme);
       });
     });
 
@@ -852,6 +856,15 @@ class SolitaireApp {
   }
 
   private initSavedPreferences(): void {
+    // 0. Board Theme (Felt color)
+    const savedTheme = localStorage.getItem('solitaire_theme') || 'classic';
+    document.body.classList.remove('theme-classic', 'theme-royal', 'theme-crimson', 'theme-midnight');
+    document.body.classList.add(`theme-${savedTheme}`);
+    document.querySelectorAll('.theme-chip').forEach(c => {
+      if ((c as HTMLElement).dataset.theme === savedTheme) c.classList.add('active');
+      else c.classList.remove('active');
+    });
+
     // 1. Handedness (Left/Right ergonomics)
     const savedHand = localStorage.getItem('solitaire_handedness') || 'right';
     if (savedHand === 'left') {
@@ -860,11 +873,13 @@ class SolitaireApp {
       document.getElementById('btn-hand-left')?.classList.add('active');
     }
 
-    // 2. Card Faces (Classic/Modern)
-    const savedFace = localStorage.getItem('solitaire_card_face') || 'classic';
-    document.body.classList.add(`card-faces-${savedFace}`);
-    document.querySelectorAll('[data-face]').forEach(b => {
-      if ((b as HTMLElement).dataset.face === savedFace) b.classList.add('active');
+    // 2. Deck Theme (Classic / Modern / Midnight / Crown)
+    const savedDeck = localStorage.getItem('solitaire_card_style') || localStorage.getItem('solitaire_card_face') || 'classic';
+    document.body.classList.remove('deck-classic', 'deck-modern', 'deck-midnight', 'deck-crown', 'card-faces-classic', 'card-faces-modern');
+    document.body.classList.add(`deck-${savedDeck}`);
+    document.body.classList.add(`card-faces-${savedDeck === 'modern' ? 'modern' : 'classic'}`);
+    document.querySelectorAll('[data-deck]').forEach(b => {
+      if ((b as HTMLElement).dataset.deck === savedDeck) b.classList.add('active');
       else b.classList.remove('active');
     });
   }
