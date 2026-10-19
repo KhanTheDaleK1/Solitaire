@@ -25,6 +25,8 @@ export interface CardMove {
   flippedCardId?: string;
   scoreChange: number;
   stockRecycled?: boolean;
+  wasteIndex?: number;
+  tableauRowIndex?: number;
 }
 
 export type DrawMode = 1 | 3;

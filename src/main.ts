@@ -19,6 +19,7 @@ class SolitaireApp {
   private timerInterval: number | null = null;
   private autoFinishInterval: number | null = null;
   private autoFinishTimeout: number | null = null;
+  private isAutoFinishing: boolean = false;
 
   // DOM Elements
   private stockPileEl: HTMLElement;
@@ -126,6 +127,7 @@ class SolitaireApp {
   private initEventListeners(): void {
     // Stock draw
     this.stockPileEl.addEventListener('click', () => {
+      if (this.isAutoFinishing) return;
       const wasEmpty = this.engine.state.stock.length === 0;
       if (this.engine.drawCards()) {
         if (wasEmpty) {
@@ -736,6 +738,9 @@ class SolitaireApp {
       });
     }
 
+    // Cancel any in-progress pointer session before replacing card DOM elements
+    this.dragDrop.cancelActiveDrag();
+
     // 1. Stock Pile & Remaining Card Badge
     const stockPlaceholder = this.stockPileEl.querySelector('.card-placeholder') as HTMLElement;
     const existingStockCards = this.stockPileEl.querySelectorAll('.card');
@@ -882,11 +887,11 @@ class SolitaireApp {
     // 5. Auto-Complete when stock stack is empty and all cards have been flipped
     if (this.engine.canAutoFinish()) {
       this.autoFinishBtn.classList.remove('hidden');
-      if (!this.autoFinishInterval && !this.autoFinishTimeout && action?.type !== 'undo') {
+      if (!this.isAutoFinishing && !this.autoFinishInterval && !this.autoFinishTimeout && action?.type !== 'undo') {
         const delayMs = flippedSet.size > 0 ? 230 : 120;
         this.autoFinishTimeout = window.setTimeout(() => {
           this.autoFinishTimeout = null;
-          if (this.engine.canAutoFinish() && !this.autoFinishInterval) {
+          if (this.engine.canAutoFinish() && !this.isAutoFinishing && !this.autoFinishInterval) {
             this.startAutoFinish();
           }
         }, delayMs);
@@ -921,6 +926,8 @@ class SolitaireApp {
   }
 
   private stopAutoFinish(): void {
+    this.isAutoFinishing = false;
+    this.dragDrop.setDisabled(false);
     if (this.autoFinishTimeout !== null) {
       clearTimeout(this.autoFinishTimeout);
       this.autoFinishTimeout = null;
@@ -933,6 +940,11 @@ class SolitaireApp {
 
   private startAutoFinish(): void {
     this.stopAutoFinish();
+    if (!this.engine.canAutoFinish()) return;
+
+    this.isAutoFinishing = true;
+    this.dragDrop.setDisabled(true);
+
     const runStep = () => {
       if (!this.engine.canAutoFinish()) {
         this.stopAutoFinish();
@@ -950,8 +962,10 @@ class SolitaireApp {
     };
 
     runStep();
-    if (this.engine.canAutoFinish()) {
+    if (this.isAutoFinishing && this.engine.canAutoFinish()) {
       this.autoFinishInterval = window.setInterval(runStep, 85);
+    } else {
+      this.stopAutoFinish();
     }
   }
 

@@ -4,6 +4,7 @@ import { CardRenderer } from '../ui/cardRenderer';
 import { SoundManager } from './sound';
 
 interface DragSession {
+  pointerId: number;
   cards: Card[];
   from: PileLocation;
   startPointerX: number;
@@ -22,6 +23,7 @@ export class DragDropManager {
   private dragLayer: HTMLElement;
   private currentSession: DragSession | null = null;
   private isPointerDown: boolean = false;
+  private disabled: boolean = false;
 
   constructor(engine: SolitaireEngine, sound: SoundManager, dragLayer: HTMLElement) {
     this.engine = engine;
@@ -29,6 +31,22 @@ export class DragDropManager {
     this.dragLayer = dragLayer;
 
     this.initEvents();
+  }
+
+  public setDisabled(disabled: boolean): void {
+    this.disabled = disabled;
+    if (disabled) {
+      this.cancelActiveDrag();
+    }
+  }
+
+  public cancelActiveDrag(): void {
+    if (this.currentSession) {
+      this.dragLayer.innerHTML = '';
+      this.currentSession.sourceElements.forEach(el => el.classList.remove('is-dragging-source'));
+      this.currentSession = null;
+    }
+    this.isPointerDown = false;
   }
 
   private initEvents(): void {
@@ -41,8 +59,8 @@ export class DragDropManager {
     if (!card.faceUp) return;
 
     cardEl.addEventListener('pointerdown', (e: PointerEvent) => {
-      // Primary button or touch only
-      if (e.button !== 0) return;
+      // Primary button or touch only; ignore if disabled or another pointer is already active
+      if (this.disabled || this.isPointerDown || e.button !== 0) return;
       e.stopPropagation();
 
       // Find all cards from this card downwards in the same pile
@@ -82,6 +100,7 @@ export class DragDropManager {
       this.isPointerDown = true;
 
       this.currentSession = {
+        pointerId: e.pointerId,
         cards: cardsToDrag,
         from,
         startPointerX: e.clientX,
@@ -103,7 +122,8 @@ export class DragDropManager {
   }
 
   private onPointerMove = (e: PointerEvent): void => {
-    if (!this.isPointerDown || !this.currentSession) return;
+    if (this.disabled || !this.isPointerDown || !this.currentSession) return;
+    if (e.pointerId !== this.currentSession.pointerId) return;
 
     const dx = e.clientX - this.currentSession.startPointerX;
     const dy = e.clientY - this.currentSession.startPointerY;
@@ -146,7 +166,8 @@ export class DragDropManager {
   };
 
   private onPointerUp = (e: PointerEvent): void => {
-    if (!this.isPointerDown || !this.currentSession) return;
+    if (this.disabled || !this.isPointerDown || !this.currentSession) return;
+    if (e.pointerId !== this.currentSession.pointerId) return;
     this.isPointerDown = false;
 
     const session = this.currentSession;
@@ -224,12 +245,9 @@ export class DragDropManager {
     });
   }
 
-  private onPointerCancel = (): void => {
-    if (this.currentSession) {
-      this.dragLayer.innerHTML = '';
-      this.currentSession.sourceElements.forEach(el => el.classList.remove('is-dragging-source'));
-      this.currentSession = null;
+  private onPointerCancel = (e: PointerEvent): void => {
+    if (this.currentSession && e.pointerId === this.currentSession.pointerId) {
+      this.cancelActiveDrag();
     }
-    this.isPointerDown = false;
   };
 }

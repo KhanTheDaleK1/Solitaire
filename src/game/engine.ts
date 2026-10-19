@@ -1,5 +1,5 @@
 import { Card, GameState, PileLocation, CardMove, DrawMode, ScoringMode } from './types';
-import { dealKlondike, dealWinningKlondike, getSuitColor } from './deck';
+import { createDeck, dealKlondike, dealWinningKlondike, getSuitColor, SUITS } from './deck';
 import { dealDailyChallenge, formatDate } from './dailyChallenge';
 
 export class SolitaireEngine {
@@ -227,10 +227,20 @@ export class SolitaireEngine {
   // Check if moving card onto foundation pile is legal
   public isValidFoundationMove(card: Card, foundationIndex: number): boolean {
     const pile = this.state.foundations[foundationIndex];
+    if (!pile) return false;
+
+    // Never allow a card that is already in a foundation pile to be placed again
+    for (const f of this.state.foundations) {
+      if (f.some(c => c.id === card.id)) {
+        return false;
+      }
+    }
 
     if (pile.length === 0) {
-      // Must start with Ace (rank 1)
-      return card.rank === 1;
+      // Must start with Ace (rank 1), and no other foundation should already hold this suit
+      if (card.rank !== 1) return false;
+      const suitAlreadyStarted = this.state.foundations.some(f => f.length > 0 && f[0].suit === card.suit);
+      return !suitAlreadyStarted;
     }
 
     const topCard = pile[pile.length - 1];
@@ -238,14 +248,66 @@ export class SolitaireEngine {
     return topCard.suit === card.suit && card.rank === topCard.rank + 1;
   }
 
-  // Execute a valid card move
+  // Finds the best foundation index for a card, preferring the matching suit slot for Aces
+  public findBestFoundationIndex(card: Card): number {
+    if (card.rank === 1) {
+      const preferredIdx = SUITS.indexOf(card.suit);
+      if (preferredIdx >= 0 && this.isValidFoundationMove(card, preferredIdx)) {
+        return preferredIdx;
+      }
+    }
+    for (let f = 0; f < 4; f++) {
+      if (this.isValidFoundationMove(card, f)) {
+        return f;
+      }
+    }
+    return -1;
+  }
+
+  // Execute a valid card move with strict source & destination verification
   public moveCards(cards: Card[], from: PileLocation, to: PileLocation): boolean {
+    if (!cards || cards.length === 0) return false;
+    if (from.type === to.type && from.index === to.index) return false;
+
+    // 1. Strictly verify that `cards` are currently at the top/end of the `from` pile
+    if (from.type === 'waste') {
+      if (cards.length !== 1 || this.state.waste.length === 0) return false;
+      const topWaste = this.state.waste[this.state.waste.length - 1];
+      if (!topWaste || topWaste.id !== cards[0].id) return false;
+    } else if (from.type === 'tableau') {
+      const sourceCol = this.state.tableau[from.index];
+      if (!sourceCol || sourceCol.length < cards.length) return false;
+      const startIdx = sourceCol.length - cards.length;
+      for (let i = 0; i < cards.length; i++) {
+        const colCard = sourceCol[startIdx + i];
+        if (!colCard || colCard.id !== cards[i].id || !colCard.faceUp) {
+          return false;
+        }
+      }
+      // Verify multi-card stack integrity
+      for (let i = 0; i < cards.length - 1; i++) {
+        if (
+          cards[i].rank !== cards[i + 1].rank + 1 ||
+          getSuitColor(cards[i].suit) === getSuitColor(cards[i + 1].suit)
+        ) {
+          return false;
+        }
+      }
+    } else if (from.type === 'foundation') {
+      const sourcePile = this.state.foundations[from.index];
+      if (cards.length !== 1 || !sourcePile || sourcePile.length === 0) return false;
+      const topFound = sourcePile[sourcePile.length - 1];
+      if (!topFound || topFound.id !== cards[0].id) return false;
+    } else {
+      return false;
+    }
+
     this.startTimer();
     let scoreChange = 0;
     let cardFlipped = false;
     let flippedCardId: string | undefined;
 
-    // Validate destination
+    // 2. Validate destination
     if (to.type === 'foundation') {
       if (cards.length !== 1 || !this.isValidFoundationMove(cards[0], to.index)) {
         return false;
@@ -270,9 +332,9 @@ export class SolitaireEngine {
       return false;
     }
 
-    // Remove cards from source
+    // 3. Remove cards from source
     if (from.type === 'waste') {
-      this.state.waste.splice(this.state.waste.length - cards.length, cards.length);
+      this.state.waste.pop();
     } else if (from.type === 'tableau') {
       const sourceCol = this.state.tableau[from.index];
       sourceCol.splice(sourceCol.length - cards.length, cards.length);
@@ -290,7 +352,7 @@ export class SolitaireEngine {
       this.state.foundations[from.index].pop();
     }
 
-    // Add cards to destination
+    // 4. Add cards to destination
     if (to.type === 'foundation') {
       this.state.foundations[to.index].push(cards[0]);
     } else if (to.type === 'tableau') {
@@ -334,15 +396,19 @@ export class SolitaireEngine {
     let isTopCard = false;
     if (from.type === 'waste') {
       isTopCard = this.state.waste[this.state.waste.length - 1]?.id === card.id;
+      if (!isTopCard) return false;
     } else if (from.type === 'tableau') {
-      isTopCard = this.state.tableau[from.index][this.state.tableau[from.index].length - 1]?.id === card.id;
+      const col = this.state.tableau[from.index];
+      if (!col || !col.some(c => c.id === card.id)) return false;
+      isTopCard = col[col.length - 1]?.id === card.id;
+    } else {
+      return false;
     }
 
     if (isTopCard) {
-      for (let f = 0; f < 4; f++) {
-        if (this.isValidFoundationMove(card, f)) {
-          return this.moveCards([card], from, { type: 'foundation', index: f });
-        }
+      const fIdx = this.findBestFoundationIndex(card);
+      if (fIdx !== -1) {
+        return this.moveCards([card], from, { type: 'foundation', index: fIdx });
       }
     }
 
@@ -422,9 +488,18 @@ export class SolitaireEngine {
 
       // Restore to source
       if (lastMove.from.type === 'waste') {
-        this.state.waste.push(...cards);
+        if (lastMove.wasteIndex !== undefined && lastMove.wasteIndex <= this.state.waste.length) {
+          this.state.waste.splice(lastMove.wasteIndex, 0, ...cards);
+        } else {
+          this.state.waste.push(...cards);
+        }
       } else if (lastMove.from.type === 'tableau') {
-        this.state.tableau[lastMove.from.index].push(...cards);
+        const sourceCol = this.state.tableau[lastMove.from.index];
+        if (lastMove.tableauRowIndex !== undefined && lastMove.tableauRowIndex <= sourceCol.length) {
+          sourceCol.splice(lastMove.tableauRowIndex, 0, ...cards);
+        } else {
+          sourceCol.push(...cards);
+        }
       } else if (lastMove.from.type === 'foundation') {
         this.state.foundations[lastMove.from.index].push(...cards);
       }
@@ -452,10 +527,9 @@ export class SolitaireEngine {
     // 1. Check waste to foundation
     if (this.state.waste.length > 0) {
       const topWaste = this.state.waste[this.state.waste.length - 1];
-      for (let f = 0; f < 4; f++) {
-        if (this.isValidFoundationMove(topWaste, f)) {
-          return { cards: [topWaste], from: { type: 'waste', index: 0 }, to: { type: 'foundation', index: f } };
-        }
+      const fIdx = this.findBestFoundationIndex(topWaste);
+      if (fIdx !== -1) {
+        return { cards: [topWaste], from: { type: 'waste', index: 0 }, to: { type: 'foundation', index: fIdx } };
       }
     }
 
@@ -465,10 +539,9 @@ export class SolitaireEngine {
       if (col.length > 0) {
         const topCard = col[col.length - 1];
         if (topCard.faceUp) {
-          for (let f = 0; f < 4; f++) {
-            if (this.isValidFoundationMove(topCard, f)) {
-              return { cards: [topCard], from: { type: 'tableau', index: colIdx }, to: { type: 'foundation', index: f } };
-            }
+          const fIdx = this.findBestFoundationIndex(topCard);
+          if (fIdx !== -1) {
+            return { cards: [topCard], from: { type: 'tableau', index: colIdx }, to: { type: 'foundation', index: fIdx } };
           }
         }
       }
@@ -539,87 +612,207 @@ export class SolitaireEngine {
     return totalFoundationCards < 52;
   }
 
-  // Run a single auto-finish step (moves lowest-rank eligible card from tableau or waste to foundations)
-  public autoFinishStep(): boolean {
-    let bestMove: { card: Card; from: PileLocation; foundationIdx: number; wasteArrayIdx?: number } | null = null;
+  /**
+   * Ensures all 52 deck cards are uniquely accounted for without duplicates when auto-finishing.
+   * If a duplicate card exists in tableau/waste that is already in foundations, removes the duplicate;
+   * if any card was lost, restores it so auto-finish can never deadlock.
+   */
+  private reconcileDeckState(): void {
+    const seenIds = new Set<string>();
 
-    // 1. Check exposed top waste card
-    if (this.state.waste.length > 0) {
-      const topWaste = this.state.waste[this.state.waste.length - 1];
-      for (let f = 0; f < 4; f++) {
-        if (this.isValidFoundationMove(topWaste, f)) {
-          bestMove = { card: topWaste, from: { type: 'waste', index: 0 }, foundationIdx: f };
-          break;
+    // 1. Validate foundations first (strictly sequential 1..k per suit)
+    for (let f = 0; f < 4; f++) {
+      const pile = this.state.foundations[f];
+      const validPile: Card[] = [];
+      for (const card of pile) {
+        const expectedRank = validPile.length + 1;
+        const expectedSuit = validPile.length === 0 ? card.suit : validPile[0].suit;
+        if (card.rank === expectedRank && card.suit === expectedSuit && !seenIds.has(card.id)) {
+          card.faceUp = true;
+          validPile.push(card);
+          seenIds.add(card.id);
+        }
+      }
+      this.state.foundations[f] = validPile;
+    }
+
+    // 2. Deduplicate tableau columns against foundations & earlier columns
+    for (let colIdx = 0; colIdx < 7; colIdx++) {
+      this.state.tableau[colIdx] = this.state.tableau[colIdx].filter(card => {
+        if (seenIds.has(card.id)) return false;
+        seenIds.add(card.id);
+        return true;
+      });
+    }
+
+    // 3. Deduplicate waste pile
+    this.state.waste = this.state.waste.filter(card => {
+      if (seenIds.has(card.id)) return false;
+      seenIds.add(card.id);
+      return true;
+    });
+
+    // 4. Deduplicate stock pile
+    this.state.stock = this.state.stock.filter(card => {
+      if (seenIds.has(card.id)) return false;
+      seenIds.add(card.id);
+      return true;
+    });
+
+    // 5. If any of the 52 canonical cards is missing, restore it to waste face-up so the game never freezes
+    if (seenIds.size < 52) {
+      const fullDeck = createDeck();
+      for (const canonical of fullDeck) {
+        if (!seenIds.has(canonical.id)) {
+          canonical.faceUp = true;
+          this.state.waste.push(canonical);
+          seenIds.add(canonical.id);
         }
       }
     }
+  }
 
-    // 2. Check exposed bottom card of each tableau column
+  // Run a single auto-finish step: strictly moves the globally lowest-rank eligible card across all piles
+  public autoFinishStep(): boolean {
+    this.reconcileDeckState();
+
+    interface AutoFinishCandidate {
+      card: Card;
+      from: PileLocation;
+      foundationIdx: number;
+      priority: number; // 0 = exposed tableau/waste top, 1 = deeper waste, 2 = deeper tableau
+      wasteArrayIdx?: number;
+      tableauRowIdx?: number;
+    }
+
+    let best: AutoFinishCandidate | null = null;
+
+    const consider = (candidate: AutoFinishCandidate) => {
+      if (
+        !best ||
+        candidate.card.rank < best.card.rank ||
+        (candidate.card.rank === best.card.rank && candidate.priority < best.priority)
+      ) {
+        best = candidate;
+      }
+    };
+
+    // 1. Check exposed top waste card (priority 0)
+    if (this.state.waste.length > 0) {
+      const topIdx = this.state.waste.length - 1;
+      const topWaste = this.state.waste[topIdx];
+      const fIdx = this.findBestFoundationIndex(topWaste);
+      if (fIdx !== -1) {
+        consider({
+          card: topWaste,
+          from: { type: 'waste', index: 0 },
+          foundationIdx: fIdx,
+          priority: 0
+        });
+      }
+    }
+
+    // 2. Check exposed bottom card of each tableau column (priority 0)
     for (let colIdx = 0; colIdx < 7; colIdx++) {
       const col = this.state.tableau[colIdx];
       if (col.length > 0) {
         const card = col[col.length - 1];
-        for (let f = 0; f < 4; f++) {
-          if (this.isValidFoundationMove(card, f)) {
-            if (!bestMove || card.rank < bestMove.card.rank) {
-              bestMove = { card, from: { type: 'tableau', index: colIdx }, foundationIdx: f };
-            }
-            break;
-          }
+        const fIdx = this.findBestFoundationIndex(card);
+        if (fIdx !== -1) {
+          consider({
+            card,
+            from: { type: 'tableau', index: colIdx },
+            foundationIdx: fIdx,
+            priority: 0
+          });
         }
       }
     }
 
-    if (bestMove) {
-      return this.moveCards([bestMove.card], bestMove.from, { type: 'foundation', index: bestMove.foundationIdx });
-    }
-
-    // 3. Fallback if waste has multiple cards and a lower-rank card is deeper in the waste pile
-    if (this.state.waste.length > 0) {
-      for (let wIdx = this.state.waste.length - 1; wIdx >= 0; wIdx--) {
-        const card = this.state.waste[wIdx];
-        for (let f = 0; f < 4; f++) {
-          if (this.isValidFoundationMove(card, f)) {
-            if (!bestMove || card.rank < bestMove.card.rank) {
-              bestMove = { card, from: { type: 'waste', index: 0 }, foundationIdx: f, wasteArrayIdx: wIdx };
-            }
-            break;
-          }
-        }
-      }
-
-      if (bestMove && bestMove.wasteArrayIdx !== undefined) {
-        this.startTimer();
-        const [removedCard] = this.state.waste.splice(bestMove.wasteArrayIdx, 1);
-        this.state.foundations[bestMove.foundationIdx].push(removedCard);
-        const scoreChange = this.state.scoringMode === 'vegas' ? 5 : 10;
-        if (this.state.scoringMode === 'standard') {
-          this.state.score = Math.max(0, this.state.score + scoreChange);
-        } else {
-          this.state.score += scoreChange;
-        }
-        this.state.moves++;
-        this.state.history.push({
-          cards: [removedCard],
+    // 3. Check deeper cards in waste pile (priority 1) so low cards in waste are never skipped
+    for (let wIdx = this.state.waste.length - 2; wIdx >= 0; wIdx--) {
+      const card = this.state.waste[wIdx];
+      const fIdx = this.findBestFoundationIndex(card);
+      if (fIdx !== -1) {
+        consider({
+          card,
           from: { type: 'waste', index: 0 },
-          to: { type: 'foundation', index: bestMove.foundationIdx },
-          cardFlipped: false,
-          scoreChange
+          foundationIdx: fIdx,
+          priority: 1,
+          wasteArrayIdx: wIdx
         });
-        this.state.lastAction = {
-          type: 'move',
-          flippedCardIds: [],
-          movedCardIds: [removedCard.id],
-          targetPile: { type: 'foundation', index: bestMove.foundationIdx },
-          timestamp: Date.now()
-        };
-        this.checkWinCondition();
-        this.notify();
-        return true;
       }
     }
 
-    return false;
+    // 4. Check deeper cards in tableau columns (priority 2) so no buried card can ever deadlock auto-complete
+    for (let colIdx = 0; colIdx < 7; colIdx++) {
+      const col = this.state.tableau[colIdx];
+      for (let rIdx = col.length - 2; rIdx >= 0; rIdx--) {
+        const card = col[rIdx];
+        if (!card.faceUp) continue;
+        const fIdx = this.findBestFoundationIndex(card);
+        if (fIdx !== -1) {
+          consider({
+            card,
+            from: { type: 'tableau', index: colIdx },
+            foundationIdx: fIdx,
+            priority: 2,
+            tableauRowIdx: rIdx
+          });
+        }
+      }
+    }
+
+    if (!best) {
+      return false;
+    }
+
+    const chosen = best as AutoFinishCandidate;
+
+    // Standard top-of-pile move
+    if (chosen.priority === 0) {
+      return this.moveCards([chosen.card], chosen.from, { type: 'foundation', index: chosen.foundationIdx });
+    }
+
+    // Extraction move from deeper in waste or tableau
+    this.startTimer();
+    let removedCard: Card;
+    if (chosen.from.type === 'waste' && chosen.wasteArrayIdx !== undefined) {
+      [removedCard] = this.state.waste.splice(chosen.wasteArrayIdx, 1);
+    } else if (chosen.from.type === 'tableau' && chosen.tableauRowIdx !== undefined) {
+      [removedCard] = this.state.tableau[chosen.from.index].splice(chosen.tableauRowIdx, 1);
+    } else {
+      return false;
+    }
+
+    removedCard.faceUp = true;
+    this.state.foundations[chosen.foundationIdx].push(removedCard);
+    const scoreChange = this.state.scoringMode === 'vegas' ? 5 : 10;
+    if (this.state.scoringMode === 'standard') {
+      this.state.score = Math.max(0, this.state.score + scoreChange);
+    } else {
+      this.state.score += scoreChange;
+    }
+    this.state.moves++;
+    this.state.history.push({
+      cards: [removedCard],
+      from: chosen.from,
+      to: { type: 'foundation', index: chosen.foundationIdx },
+      cardFlipped: false,
+      scoreChange,
+      wasteIndex: chosen.wasteArrayIdx,
+      tableauRowIndex: chosen.tableauRowIdx
+    });
+    this.state.lastAction = {
+      type: 'move',
+      flippedCardIds: [],
+      movedCardIds: [removedCard.id],
+      targetPile: { type: 'foundation', index: chosen.foundationIdx },
+      timestamp: Date.now()
+    };
+    this.checkWinCondition();
+    this.notify();
+    return true;
   }
 
   // Win condition: All 4 foundations have 13 cards (total 52)
