@@ -3,12 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>High-Fantasy Oil-Painted Court Deck - Solitaire Theme</title>
+<title>Collector Card Packs - Solitaire Gallery</title>
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Plus+Jakarta+Sans:wght@500;600;700;800&display=swap" rel="stylesheet" />
 <style>
   :root {
     --gold-rim: linear-gradient(135deg, #fce082 0%, #d4af37 40%, #aa8428 75%, #573e0c 100%);
-    --gold-glow: rgba(212, 175, 55, 0.4);
     --midnight-base: #07090e;
     --card-width: 165px;
     --card-height: 245px;
@@ -38,9 +37,34 @@
   p.sub {
     font-size: 13.5px;
     color: #94a3b8;
-    margin-bottom: 24px;
+    margin-bottom: 18px;
     text-align: center;
     max-width: 680px;
+  }
+
+  .pack-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .pack-tab {
+    padding: 9px 16px;
+    border-radius: 999px;
+    background: rgba(15, 23, 42, 0.8);
+    border: 1.5px solid rgba(212, 175, 55, 0.3);
+    color: #e2e8f0;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.18s ease;
+  }
+  .pack-tab.active {
+    background: linear-gradient(135deg, #d4af37 0%, #997825 100%);
+    color: #090b10;
+    border-color: #fff3b0;
+    box-shadow: 0 0 16px rgba(212, 175, 55, 0.45);
   }
 
   h2.tier-title {
@@ -168,8 +192,16 @@
 </head>
 <body>
 
-  <h1>High-Fantasy Oil-Painted Court Deck</h1>
-  <p class="sub">Realistic oil-painted portraits of the Four Queens, Four Kings, and Four Jacks framed in 3-layer gilded filigree with strict inner clipping.</p>
+  <h1>Collector Card Deck Gallery</h1>
+  <p class="sub">Preview all 5 collector packs: High Fantasy Oil Paintings, Ancient Greek Lovers, Vintage Pin-Up, Hentai Waifu, and Kamasutra.</p>
+
+  <div class="pack-tabs">
+    <button class="pack-tab active" data-pack="fantasy">⚔️ High Fantasy</button>
+    <button class="pack-tab" data-pack="greek">🏛️ Greek Lovers</button>
+    <button class="pack-tab" data-pack="pinup">💋 Vintage Pin-Up</button>
+    <button class="pack-tab" data-pack="hentai">🌸 Hentai Waifu</button>
+    <button class="pack-tab" data-pack="kamasutra">🪷 Kamasutra</button>
+  </div>
 
   <svg width="0" height="0" style="position:absolute">
     <defs>
@@ -217,6 +249,12 @@
       { key: 'diamonds', ref: '#suit-diamond' },
       { key: 'clubs', ref: '#suit-club' }
     ];
+    let activePack = 'fantasy';
+
+    function getImgSrc(pack, role, suit) {
+      return pack === 'fantasy' ? `/cards/${role}-${suit}.jpg` : `/cards/${pack}/${role}-${suit}.jpg`;
+    }
+
     function renderTier(containerId, rankGlyph, rolePrefix) {
       const container = document.getElementById(containerId);
       container.innerHTML = suits.map(s => `
@@ -228,7 +266,7 @@
             </div>
             <svg class="top-pip" viewBox="0 0 100 100"><use href="${s.ref}"/></svg>
             <div class="art-layer">
-              <img src="/cards/${rolePrefix}-${s.key}.jpg" alt="${rankGlyph} of ${s.key}" />
+              <img src="${getImgSrc(activePack, rolePrefix, s.key)}" alt="${rankGlyph} of ${s.key}" />
             </div>
             <div class="art-vignette"></div>
             <svg class="filigree-frame" viewBox="0 0 133 208"><use href="#filigree"/></svg>
@@ -236,9 +274,23 @@
         </div>
       `).join('');
     }
-    renderTier('queens-row', 'Q', 'queen');
-    renderTier('kings-row', 'K', 'king');
-    renderTier('jacks-row', 'J', 'jack');
+
+    function renderAll() {
+      renderTier('queens-row', 'Q', 'queen');
+      renderTier('kings-row', 'K', 'king');
+      renderTier('jacks-row', 'J', 'jack');
+    }
+
+    document.querySelectorAll('.pack-tab').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.pack-tab').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        activePack = btn.dataset.pack;
+        renderAll();
+      });
+    });
+
+    renderAll();
   </script>
 </body>
 </html>

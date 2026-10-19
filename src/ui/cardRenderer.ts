@@ -1,9 +1,26 @@
 import { Card, Suit } from '../game/types';
 import { getSuitColor, getRankLabel } from '../game/deck';
 
+export type DeckPackId =
+  | 'fantasy'
+  | 'greek'
+  | 'pinup'
+  | 'hentai'
+  | 'kamasutra'
+  | 'classic'
+  | 'modern'
+  | 'midnight'
+  | 'crown';
+
+const CUSTOM_ART_PACKS = new Set<string>(['greek', 'pinup', 'hentai', 'kamasutra']);
+
 export class CardRenderer {
   private static frontMarkupCache = new Map<string, string>();
+  private static preloadedDecks = new Set<string>();
   private static preloadedImages: HTMLImageElement[] = [];
+  private static currentDeck: DeckPackId =
+    ((typeof localStorage !== 'undefined' && localStorage.getItem('solitaire_card_style_v2')) as DeckPackId) || 'fantasy';
+
   private static backMarkupCache = `
     <div class="card-back">
       <div class="card-back-pattern">
@@ -13,17 +30,45 @@ export class CardRenderer {
   `;
 
   static {
-    // Preload all 12 high-fantasy oil-painted court card portraits so card flips are zero-latency
     if (typeof window !== 'undefined') {
-      const roles = ['king', 'queen', 'jack'];
-      const suits: Suit[] = ['hearts', 'spades', 'diamonds', 'clubs'];
-      for (const role of roles) {
-        for (const suit of suits) {
-          const img = new Image();
-          img.decoding = 'async';
-          img.src = `/cards/${role}-${suit}.jpg`;
-          this.preloadedImages.push(img);
-        }
+      this.preloadDeck(this.currentDeck);
+    }
+  }
+
+  public static setDeck(deck: string): void {
+    const normalized = (deck || 'fantasy') as DeckPackId;
+    if (this.currentDeck !== normalized) {
+      this.currentDeck = normalized;
+      this.frontMarkupCache.clear();
+    }
+    this.preloadDeck(normalized);
+  }
+
+  public static getDeck(): DeckPackId {
+    return this.currentDeck;
+  }
+
+  private static getCourtImageSrc(deck: string, role: string, suit: Suit): string {
+    if (CUSTOM_ART_PACKS.has(deck)) {
+      return `/cards/${deck}/${role}-${suit}.jpg`;
+    }
+    return `/cards/${role}-${suit}.jpg`;
+  }
+
+  public static preloadDeck(deck: string): void {
+    if (typeof window === 'undefined') return;
+    const packKey = CUSTOM_ART_PACKS.has(deck) ? deck : 'fantasy';
+    if (this.preloadedDecks.has(packKey)) return;
+    this.preloadedDecks.add(packKey);
+
+    const roles = ['king', 'queen', 'jack'];
+    const suits: Suit[] = ['hearts', 'spades', 'diamonds', 'clubs'];
+    for (const role of roles) {
+      for (const suit of suits) {
+        const img = new Image();
+        img.decoding = 'async';
+        img.src = this.getCourtImageSrc(packKey, role, suit);
+        this.preloadedImages.push(img);
       }
     }
   }
@@ -74,12 +119,9 @@ export class CardRenderer {
     `;
   }
 
-  /**
-   * Realistic High-Fantasy Oil-Painted Court Portraits (Kings, Queens, Jacks)
-   */
   private static getCourtPortraitMarkup(rank: number, suit: Suit): string {
     const role = rank === 13 ? 'king' : rank === 12 ? 'queen' : 'jack';
-    const src = `/cards/${role}-${suit}.jpg`;
+    const src = this.getCourtImageSrc(this.currentDeck, role, suit);
     return `
       <div class="art-layer character-art court-portrait">
         <img class="court-oil-painting" src="${src}" alt="" decoding="async" draggable="false" />
@@ -123,7 +165,8 @@ export class CardRenderer {
   }
 
   private static getFrontMarkup(card: Card): string {
-    const cached = this.frontMarkupCache.get(card.id);
+    const cacheKey = `${this.currentDeck}:${card.id}`;
+    const cached = this.frontMarkupCache.get(cacheKey);
     if (cached) return cached;
 
     const color = getSuitColor(card.suit);
@@ -150,7 +193,7 @@ export class CardRenderer {
       </div>
     `;
 
-    this.frontMarkupCache.set(card.id, markup);
+    this.frontMarkupCache.set(cacheKey, markup);
     return markup;
   }
 
@@ -161,7 +204,13 @@ export class CardRenderer {
   ): HTMLElement {
     const el = document.createElement('div');
     const isCourtCard = card.rank >= 11 && card.rank <= 13;
-    const classes = ['card', 'card-gilded', 'theme-fantasy', card.faceUp ? 'face-up' : 'face-down'];
+    const classes = [
+      'card',
+      'card-gilded',
+      'theme-fantasy',
+      `pack-${this.currentDeck}`,
+      card.faceUp ? 'face-up' : 'face-down'
+    ];
     if (isCourtCard) classes.push('court-card');
     if (isDragging) classes.push('is-dragging');
     if (animState?.isFlipping) classes.push('is-flipping');

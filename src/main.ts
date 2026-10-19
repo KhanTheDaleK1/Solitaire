@@ -342,16 +342,22 @@ class SolitaireApp {
       });
     });
 
-    // Card Face Style (Dark Fantasy Gilded / Classic / Modern / Midnight / Crown)
+    // Card Deck Pack (Fantasy / Greek Lovers / Pin-Up / Hentai Waifu / Kamasutra / Classic / Modern / Midnight)
     document.querySelectorAll('[data-deck]').forEach((btn) => {
       btn.addEventListener('click', (e) => {
         document.querySelectorAll('[data-deck]').forEach(b => b.classList.remove('active'));
         const target = e.currentTarget as HTMLElement;
         target.classList.add('active');
         const deck = target.dataset.deck || 'fantasy';
-        document.body.classList.remove('deck-fantasy', 'deck-classic', 'deck-modern', 'deck-midnight', 'deck-crown', 'card-faces-classic', 'card-faces-modern');
+        document.body.classList.remove(
+          'deck-fantasy', 'deck-greek', 'deck-pinup', 'deck-hentai', 'deck-kamasutra',
+          'deck-classic', 'deck-modern', 'deck-midnight', 'deck-crown',
+          'card-faces-classic', 'card-faces-modern'
+        );
         document.body.classList.add(`deck-${deck}`);
         localStorage.setItem('solitaire_card_style_v2', deck);
+        CardRenderer.setDeck(deck);
+        this.render(this.engine.state);
       });
     });
 
@@ -1334,8 +1340,12 @@ class SolitaireApp {
 
     // 2. Deck Face Theme (defaults to Dark Fantasy Gilded)
     const savedDeck = localStorage.getItem('solitaire_card_style_v2') || 'fantasy';
-    document.body.classList.remove('deck-fantasy', 'deck-classic', 'deck-modern', 'deck-midnight', 'deck-crown');
+    document.body.classList.remove(
+      'deck-fantasy', 'deck-greek', 'deck-pinup', 'deck-hentai', 'deck-kamasutra',
+      'deck-classic', 'deck-modern', 'deck-midnight', 'deck-crown'
+    );
     document.body.classList.add(`deck-${savedDeck}`);
+    CardRenderer.setDeck(savedDeck);
     document.querySelectorAll('[data-deck]').forEach(b => {
       b.classList.toggle('active', (b as HTMLElement).dataset.deck === savedDeck);
     });

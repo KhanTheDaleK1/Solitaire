@@ -1,4 +1,4 @@
-const CACHE_NAME = 'solitaire-pwa-v10';
+const CACHE_NAME = 'solitaire-pwa-v11';
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',

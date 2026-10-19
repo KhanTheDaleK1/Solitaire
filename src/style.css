@@ -1164,6 +1164,76 @@ input:checked + .toggle-slider:before {
 .theme-chip-red { background: #881337; }
 .theme-chip-dark { background: #0f172a; }
 
+/* Card Deck Pack Grid Selector */
+.deck-pack-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  width: 100%;
+  margin-top: 6px;
+}
+
+.deck-pack-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 9px 4px;
+  border-radius: 10px;
+  background: rgba(15, 23, 42, 0.72);
+  border: 1.5px solid rgba(212, 175, 55, 0.22);
+  color: #e2e8f0;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  text-align: center;
+}
+
+.deck-pack-btn:hover {
+  background: rgba(30, 41, 59, 0.9);
+  border-color: rgba(248, 226, 135, 0.55);
+  transform: translateY(-1px);
+}
+
+.deck-pack-btn.active {
+  background: linear-gradient(145deg, rgba(212, 175, 55, 0.28) 0%, rgba(120, 53, 15, 0.45) 100%);
+  border-color: #f8e287;
+  box-shadow: 0 0 12px rgba(212, 175, 55, 0.38);
+}
+
+.deck-pack-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.deck-pack-name {
+  font-size: 11px;
+  font-weight: 700;
+  color: #f8fafc;
+  line-height: 1.15;
+}
+
+.deck-pack-tag {
+  font-size: 9px;
+  font-weight: 600;
+  color: #cbd5e1;
+  opacity: 0.78;
+}
+
+/* Pack-Specific Rim Accents */
+.card.pack-greek {
+  background: linear-gradient(135deg, #fff7d6 0%, #e6c665 45%, #b8860b 80%, #6b4c08 100%);
+}
+.card.pack-pinup {
+  background: linear-gradient(135deg, #fecdd3 0%, #fb7185 35%, #d4af37 75%, #881337 100%);
+}
+.card.pack-hentai {
+  background: linear-gradient(135deg, #f5d0fe 0%, #e879f9 40%, #c084fc 75%, #6b21a8 100%);
+}
+.card.pack-kamasutra {
+  background: linear-gradient(135deg, #fde68a 0%, #f59e0b 40%, #dc2626 80%, #7c2d12 100%);
+}
+
 /* Stats Grid */
 .stats-grid {
   display: grid;
