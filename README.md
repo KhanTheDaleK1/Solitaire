@@ -54,6 +54,42 @@ Visit `http://localhost:3000` on your mobile browser or desktop.
 
 ---
 
+## Dedicated CLI Terminal Client
+
+A full-featured terminal edition implementing the MobilityWare visual style and mechanics directly in your command line:
+
+```bash
+# Launch terminal game
+./solitaire
+
+# Play Today's Daily Challenge (deterministic calendar seed)
+./solitaire --daily
+
+# Play with Draw 3 rules
+./solitaire --draw 3
+
+# Import a MobilityWare XML save file directly
+./solitaire --import-xml path/to/save.xml
+```
+
+### CLI Controls & Navigation
+- **Hotkeys**:
+  - `Space` or `d`: Draw card from stock
+  - `1`..`7`: Auto-move top card from Tableau column `T1`..`T7`
+  - `w`: Auto-move from Waste pile
+  - `u`: Undo move
+  - `h`: Show hint
+  - `f`: Auto-finish remaining cards
+  - `c`: Open Daily Challenge Crown Calendar & Trophies view
+  - `q`: Quit game
+- **Positional Commands**:
+  - `move W T3` (or `w 3`): Move waste card to Tableau 3
+  - `move T2:8H T5` (or `t2 5`): Move stack starting at 8♥ to Tableau 5
+  - `auto T4` (or `a 4`): Auto-move card to foundation or valid tableau
+  - `finish`: Autocomplete hand when face-down cards are revealed
+
+---
+
 ## Setting Up Google & GitHub Authentication
 
 To enable real Google and GitHub OAuth:
