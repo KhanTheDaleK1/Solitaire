@@ -216,7 +216,12 @@ export class CardRenderer {
       `pack-${this.currentDeck}`,
       card.faceUp ? 'face-up' : 'face-down'
     ];
-    if (isCourtCard) classes.push('court-card');
+    if (isCourtCard) {
+      classes.push('court-card');
+    } else {
+      classes.push('number-card');
+      if (card.rank === 1) classes.push('ace-card');
+    }
     if (isDragging) classes.push('is-dragging');
     if (animState?.isFlipping) classes.push('is-flipping');
     if (animState?.isDealing) classes.push('is-dealing');
