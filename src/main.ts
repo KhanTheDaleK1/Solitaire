@@ -249,6 +249,19 @@ class SolitaireApp {
 
     // Puzzle Bonus Piece Claim
     document.getElementById('btn-claim-free-piece')?.addEventListener('click', () => {
+      const availablePuzzle = this.monthlyPuzzles.find(
+        puzzle => (this.statsManager.getStats().meta.puzzleProgress?.[puzzle.id]?.length || 0) < puzzle.pieceCount
+      );
+      if (!availablePuzzle) {
+        this.renderPuzzlesModal();
+        return;
+      }
+
+      if ((this.statsManager.getStats().meta.puzzleProgress?.[this.activePuzzleId]?.length || 0) >=
+        (this.monthlyPuzzles.find(puzzle => puzzle.id === this.activePuzzleId)?.pieceCount || 12)) {
+        this.activePuzzleId = availablePuzzle.id;
+      }
+
       const res = this.statsManager.unlockNextPuzzlePiece(this.activePuzzleId, this.auth.getCurrentUser());
       if (res.unlockedIndex !== null) {
         this.sound.playFoundationPlaced(10);
@@ -1173,6 +1186,14 @@ class SolitaireApp {
   private renderPuzzlesModal(newlyUnlockedIndex?: number): void {
     const stats = this.statsManager.getStats();
     const meta = stats.meta;
+    const claimButton = document.getElementById('btn-claim-free-piece') as HTMLButtonElement;
+    const hasClaimablePiece = this.monthlyPuzzles.some(
+      puzzle => (meta.puzzleProgress?.[puzzle.id]?.length || 0) < puzzle.pieceCount
+    );
+    claimButton.disabled = !hasClaimablePiece;
+    claimButton.querySelector('span')!.textContent = hasClaimablePiece
+      ? '🎁 Claim Bonus Puzzle Piece'
+      : '✅ All Monthly Puzzles Complete';
 
     document.getElementById('puz-total-pieces')!.textContent = meta.piecesCollected.toString();
     document.getElementById('puz-total-solved')!.textContent = meta.puzzlesCompleted.toString();

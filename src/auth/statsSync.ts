@@ -69,7 +69,7 @@ const MONTHLY_THEMES: MonthlyPuzzleTheme[][] = [
   [
     { slug: 'independence-fireworks', name: 'Independence Fireworks', theme: 'Summer Celebration', badgeEmoji: '🎆', colors: ['#172554', '#dc2626', '#fef2f2'], icon: '🗽' },
     { slug: 'seaside-boardwalk', name: 'Seaside Boardwalk', theme: 'Ocean Holiday', badgeEmoji: '🎡', colors: ['#075985', '#f97316', '#fef3c7'], icon: '🌊' },
-    { slug: 'red-white-blue', name: 'Red, White and Blue', theme: 'Patriotic Picnic', badgeEmoji: '⭐', colors: ['#1e3a8a', '#dc2626', '#f8fafc'], icon: '🇺🇸' },
+    { slug: 'sandcastle-cove', name: 'Sandcastle Cove', theme: 'Beach Holiday', badgeEmoji: '🏖️', colors: ['#075985', '#f59e0b', '#fef3c7'], icon: '🏰' },
     { slug: 'coral-reef', name: 'Coral Reef', theme: 'Underwater Summer', badgeEmoji: '🐠', colors: ['#0c4a6e', '#14b8a6', '#fb923c'], icon: '🐚' },
     { slug: 'orchard-sun', name: 'Orchard Sun', theme: 'Summer Harvest', badgeEmoji: '🍎', colors: ['#7c2d12', '#ea580c', '#fef08a'], icon: '🍎' },
     { slug: 'lakehouse-weekend', name: 'Lakehouse Weekend', theme: 'Long Summer Days', badgeEmoji: '🛶', colors: ['#164e63', '#0284c7', '#fde68a'], icon: '🛶' },
@@ -94,7 +94,7 @@ const MONTHLY_THEMES: MonthlyPuzzleTheme[][] = [
     { slug: 'harvest-moon', name: 'Harvest Moon', theme: 'October Moonlight', badgeEmoji: '🌕', colors: ['#431407', '#b45309', '#fde68a'], icon: '🌙' },
     { slug: 'maple-lane', name: 'Maple Lane', theme: 'Falling Leaves', badgeEmoji: '🍂', colors: ['#713f12', '#dc2626', '#fbbf24'], icon: '🍁' },
     { slug: 'witches-cottage', name: 'Witch\'s Cottage', theme: 'Enchanted October', badgeEmoji: '🧙', colors: ['#312e81', '#7e22ce', '#a3e635'], icon: '🧹' },
-    { slug: 'cozy-bookshop', name: 'Cozy Bookshop', theme: 'Crisp Evenings', badgeEmoji: '📖', colors: ['#451a03', '#92400e', '#fde68a'], icon: '📚' }
+    { slug: 'autumn-forest', name: 'Autumn Forest', theme: 'Falling Leaves', badgeEmoji: '🍂', colors: ['#14532d', '#b45309', '#fbbf24'], icon: '🌲' }
   ],
   [
     { slug: 'thanksgiving-table', name: 'Thanksgiving Table', theme: 'Grateful Harvest', badgeEmoji: '🦃', colors: ['#451a03', '#b45309', '#fde68a'], icon: '🍽️' },
@@ -121,7 +121,9 @@ const MONTHLY_THEMES: MonthlyPuzzleTheme[][] = [
 export function getMonthlyPuzzles(date: Date = new Date()): JigsawPuzzleDef[] {
   const year = date.getFullYear();
   const month = date.getMonth();
-  return MONTHLY_THEMES[month].map((theme) => ({
+  // The catalog has shared spring/autumn sets, while the public month still changes every month.
+  const themeSetByMonth = [0, 1, 2, 2, 3, 4, 5, 6, 7, 7, 8, 9];
+  return MONTHLY_THEMES[themeSetByMonth[month]].map((theme) => ({
     ...theme,
     id: `${year}-${String(month + 1).padStart(2, '0')}-${theme.slug}`,
     pieceCount: 12,
