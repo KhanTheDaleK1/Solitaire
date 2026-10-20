@@ -56,15 +56,30 @@ export function getMarioWaifuPortrait(rank: string, suit: string): string {
   const faceBottom = rank === 'J' && style.accessory === 'mushroom' ? 78 : 77;
 
   return `<svg viewBox="0 0 130 150" class="mario-portrait-svg" role="img" aria-label="Mushroom Kingdom ${rank} of ${suit}">
-    <circle cx="65" cy="78" r="55" fill="${style.accent}" opacity=".12"/>
+    <defs>
+      <radialGradient id="mario-aura-${rank}-${suit}" cx="50%" cy="36%" r="64%">
+        <stop offset="0" stop-color="${style.accent}" stop-opacity=".34"/>
+        <stop offset="1" stop-color="${style.accent}" stop-opacity="0"/>
+      </radialGradient>
+      <linearGradient id="mario-outfit-${rank}-${suit}" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="${style.outfit}"/>
+        <stop offset="1" stop-color="#4c1d36" stop-opacity=".88"/>
+      </linearGradient>
+    </defs>
+    <circle cx="65" cy="77" r="56" fill="url(#mario-aura-${rank}-${suit})"/>
     <path fill="${style.hair}" d="M14 72 C-4 104 14 143 34 150 C22 120 18 92 31 68 Z"/>
     <path fill="${style.hair}" d="M116 72 C134 104 116 143 96 150 C108 120 112 92 99 68 Z"/>
+    <path fill="${style.hair}" opacity=".72" d="M43 35 Q55 24 66 31 Q76 24 87 36 Q77 31 69 40 Q58 32 43 35 Z"/>
     ${accessoryMarkup(style.accessory, style.accent)}
-    <path fill="${style.outfit}" d="M28 150 C33 111 46 99 65 99 C84 99 97 111 102 150 Z"/>
+    <path fill="url(#mario-outfit-${rank}-${suit})" d="M28 150 C33 111 46 99 65 99 C84 99 97 111 102 150 Z"/>
     <path fill="${style.accent}" opacity=".8" d="M40 108 Q65 120 90 108 Q65 100 40 108 Z"/>
+    <path fill="${style.skin}" d="M52 78 L52 97 Q65 104 78 97 L78 78 Z"/>
     <path fill="${style.skin}" d="M48 ${faceTop + 18} C48 ${faceTop + 3} 55 ${faceTop - 4} 65 ${faceTop - 4} C75 ${faceTop - 4} 82 ${faceTop + 3} 82 ${faceTop + 18} C82 ${faceBottom - 3} 74 ${faceBottom} 65 ${faceBottom} C56 ${faceBottom} 48 ${faceBottom - 3} 48 ${faceTop + 18} Z"/>
+    <path stroke="${style.hair}" stroke-width="1.4" fill="none" d="M51 45 Q56 42 61 45 M69 45 Q74 42 79 45"/>
     ${faceExpression(style.expression)}
-    <path stroke="${style.outfit}" stroke-width="1.8" fill="none" d="M60 64 Q65 68 70 64"/>
+    <path stroke="#be123c" stroke-width="1.8" fill="none" d="M60 64 Q65 68 70 64"/>
+    <ellipse cx="65" cy="116" rx="6" ry="7" fill="${style.accent}" stroke="#fbbf24" stroke-width="1.4"/>
+    <path stroke="#fff" stroke-width="1" opacity=".75" d="M62 113 L65 119 L68 113"/>
   </svg>`;
 }
 
