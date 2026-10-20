@@ -4,10 +4,11 @@ import { WinAnimator } from './game/animator';
 import { CardRenderer } from './ui/cardRenderer';
 import { DragDropManager } from './game/dragDrop';
 import { AuthService } from './auth/authService';
-import { StatsManager, MOBILITYWARE_PUZZLES, getPlayerRank } from './auth/statsSync';
+import { StatsManager, getMonthlyPuzzles, getPlayerRank } from './auth/statsSync';
 import { MobilityWareImporter } from './auth/importer';
 import { GameState, DrawMode, ScoringMode, UserStats } from './game/types';
 import { formatDate } from './game/dailyChallenge';
+import { getPuzzleArtwork } from './game/puzzleArt';
 
 class SolitaireApp {
   private engine: SolitaireEngine;
@@ -46,7 +47,8 @@ class SolitaireApp {
   private calYear: number = 2026;
   private calMonth: number = 9; // 0-indexed (9 = October)
   private selectedDate: string = '2026-10-19';
-  private activePuzzleId: string = MOBILITYWARE_PUZZLES[0].id;
+  private monthlyPuzzles = getMonthlyPuzzles();
+  private activePuzzleId: string = this.monthlyPuzzles[0].id;
   private lastAnimatedTimestamp: number = 0;
   private jigsawLayouts: Record<string, number[]> = this.loadJigsawLayouts();
   private selectedJigsawSlot: number | null = null;
@@ -256,7 +258,7 @@ class SolitaireApp {
         this.sound.playWinFanfare();
         // Switch to next incomplete puzzle if current is complete
         const stats = this.statsManager.getStats();
-        const nextIncomplete = MOBILITYWARE_PUZZLES.find(
+        const nextIncomplete = this.monthlyPuzzles.find(
           p => (stats.meta.puzzleProgress?.[p.id]?.length || 0) < p.pieceCount
         );
         if (nextIncomplete) {
@@ -1166,7 +1168,7 @@ class SolitaireApp {
   }
 
   /**
-   * Renders the MobilityWare Jigsaw Puzzle Events Gallery & Interactive 4x4 Board
+  * Renders the current month's eight-puzzle gallery and interactive 4x3 boards
    */
   private renderPuzzlesModal(newlyUnlockedIndex?: number): void {
     const stats = this.statsManager.getStats();
@@ -1180,7 +1182,14 @@ class SolitaireApp {
     const selectorEl = document.getElementById('puzzle-selector')!;
     selectorEl.innerHTML = '';
 
-    MOBILITYWARE_PUZZLES.forEach((puz) => {
+    const currentPuzzles = getMonthlyPuzzles();
+    if (currentPuzzles[0].id.slice(0, 7) !== this.monthlyPuzzles[0].id.slice(0, 7)) {
+      this.monthlyPuzzles = currentPuzzles;
+      this.activePuzzleId = currentPuzzles[0].id;
+      this.selectedJigsawSlot = null;
+    }
+
+    this.monthlyPuzzles.forEach((puz) => {
       const unlockedArr = meta.puzzleProgress?.[puz.id] || [];
       const isComplete = unlockedArr.length >= puz.pieceCount;
       const btn = document.createElement('button');
@@ -1198,7 +1207,7 @@ class SolitaireApp {
       selectorEl.appendChild(btn);
     });
 
-    const activeDef = MOBILITYWARE_PUZZLES.find(p => p.id === this.activePuzzleId) || MOBILITYWARE_PUZZLES[0];
+    const activeDef = this.monthlyPuzzles.find(p => p.id === this.activePuzzleId) || this.monthlyPuzzles[0];
     const unlockedPieces = meta.puzzleProgress?.[activeDef.id] || [];
     const layout = this.getJigsawLayout(activeDef.id, unlockedPieces);
     const solved = unlockedPieces.length === activeDef.pieceCount && layout.every((piece, slot) => piece === slot);
@@ -1214,8 +1223,10 @@ class SolitaireApp {
         : 'Tap two unlocked pieces to swap them into place.';
 
     const boardEl = document.getElementById('jigsaw-board')!;
+    const puzzleArtwork = getPuzzleArtwork(activeDef);
     boardEl.innerHTML = '';
-    boardEl.style.background = `linear-gradient(135deg, ${activeDef.colors[0]} 0%, ${activeDef.colors[1]} 60%, ${activeDef.colors[2]} 100%)`;
+    boardEl.style.backgroundImage = `url("${puzzleArtwork}")`;
+    boardEl.style.backgroundSize = '400% 300%';
 
     for (let idx = 0; idx < activeDef.pieceCount; idx++) {
       const pieceIndex = layout[idx];
@@ -1227,13 +1238,10 @@ class SolitaireApp {
       cell.dataset.slot = idx.toString();
 
       if (isUnlocked) {
-        let centerDecor = '';
-        if (pieceIndex === 5) centerDecor = `<span class="jigsaw-art-emblem">${activeDef.icon}</span>`;
-        if (pieceIndex === 10) centerDecor = `<span class="jigsaw-art-emblem">${activeDef.badgeEmoji}</span>`;
-        cell.style.background = `linear-gradient(135deg, ${activeDef.colors[0]} 0%, ${activeDef.colors[1]} 60%, ${activeDef.colors[2]} 100%)`;
-        cell.style.backgroundPosition = `${(pieceIndex % 4) * 33.333}% ${Math.floor(pieceIndex / 4) * 33.333}%`;
+        cell.style.backgroundImage = `url("${puzzleArtwork}")`;
+        cell.style.backgroundSize = '400% 300%';
+        cell.style.backgroundPosition = `${(pieceIndex % 4) * 33.333}% ${Math.floor(pieceIndex / 4) * 50}%`;
         cell.innerHTML = `
-          ${centerDecor}
           <span class="jigsaw-piece-num">#${pieceIndex + 1}</span>
         `;
         cell.addEventListener('click', () => this.selectJigsawSlot(idx));
@@ -1260,7 +1268,7 @@ class SolitaireApp {
   private getJigsawLayout(puzzleId: string, unlockedPieces: number[]): number[] {
     const unlocked = new Set(unlockedPieces);
     const saved = this.jigsawLayouts[puzzleId];
-    const pieceCount = MOBILITYWARE_PUZZLES.find(puzzle => puzzle.id === puzzleId)?.pieceCount || 12;
+    const pieceCount = this.monthlyPuzzles.find(puzzle => puzzle.id === puzzleId)?.pieceCount || 12;
     if (
       saved?.length === pieceCount &&
       saved.filter(piece => piece !== -1).length === unlockedPieces.length &&
@@ -1284,7 +1292,7 @@ class SolitaireApp {
       const swapIndex = Math.floor(Math.random() * (index + 1));
       [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
     }
-    const pieceCount = MOBILITYWARE_PUZZLES.find(puzzle => puzzle.id === puzzleId)?.pieceCount || 12;
+    const pieceCount = this.monthlyPuzzles.find(puzzle => puzzle.id === puzzleId)?.pieceCount || 12;
     const layout = Array.from({ length: pieceCount }, () => -1);
     unlockedPieces.forEach((_, slot) => { layout[slot] = shuffled[slot]; });
     this.jigsawLayouts[puzzleId] = layout;

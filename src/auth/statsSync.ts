@@ -132,7 +132,7 @@ export function getMonthlyPuzzles(date: Date = new Date()): JigsawPuzzleDef[] {
 export const MOBILITYWARE_PUZZLES = getMonthlyPuzzles();
 
 function getPuzzleDefinition(puzzleId: string): JigsawPuzzleDef {
-  return MOBILITYWARE_PUZZLES.find(puzzle => puzzle.id === puzzleId)
+  return getMonthlyPuzzles().find(puzzle => puzzle.id === puzzleId)
     || { id: puzzleId, name: 'Legacy Puzzle', theme: 'Classic Collection', badgeEmoji: '🧩', colors: ['#334155', '#64748b', '#cbd5e1'], icon: '🧩', pieceCount: 12, piecesPerWin: 4 };
 }
 
@@ -198,8 +198,9 @@ export class StatsManager {
 
   constructor() {
     this.stats = this.loadStats();
-    if (!MOBILITYWARE_PUZZLES.some(puzzle => puzzle.id === this.stats.meta.currentPuzzle)) {
-      this.stats.meta.currentPuzzle = MOBILITYWARE_PUZZLES[0].id;
+    const monthlyPuzzles = getMonthlyPuzzles();
+    if (!monthlyPuzzles.some(puzzle => puzzle.id === this.stats.meta.currentPuzzle)) {
+      this.stats.meta.currentPuzzle = monthlyPuzzles[0].id;
     }
   }
 
@@ -292,7 +293,7 @@ export class StatsManager {
     puzzleId?: string,
     user?: AuthUser | null,
     requestedPieces: number = 1
-  ): { unlockedIndex: number | null; completedPuzzle: boolean } {
+  ): { unlockedIndex: number | null; unlockedCount: number; completedPuzzle: boolean } {
     const targetId = puzzleId || this.stats.meta.currentPuzzle || 'autumn_cabin';
     const puzzle = getPuzzleDefinition(targetId);
     if (!this.stats.meta.puzzleProgress) {
@@ -309,7 +310,12 @@ export class StatsManager {
     }
 
     if (missing.length === 0) {
-      return { unlockedIndex: null, completedPuzzle: false };
+      return { unlockedIndex: null, unlockedCount: 0, completedPuzzle: false };
+    }
+
+    for (let index = missing.length - 1; index > 0; index--) {
+      const swapIndex = Math.floor(Math.random() * (index + 1));
+      [missing[index], missing[swapIndex]] = [missing[swapIndex], missing[index]];
     }
 
     const piecesToUnlock = Math.min(requestedPieces, missing.length);
@@ -326,7 +332,7 @@ export class StatsManager {
     }
 
     this.saveStats(user);
-    return { unlockedIndex: nextPiece, completedPuzzle };
+    return { unlockedIndex: nextPiece, unlockedCount: piecesToUnlock, completedPuzzle };
   }
 
   public recordGame(
@@ -380,7 +386,7 @@ export class StatsManager {
           getPuzzleDefinition(this.stats.meta.currentPuzzle).piecesPerWin
         );
         unlockedPiece = puzzleRes.unlockedIndex;
-        unlockedPieceCount = puzzleRes.unlockedIndex === null ? 0 : getPuzzleDefinition(this.stats.meta.currentPuzzle).piecesPerWin;
+        unlockedPieceCount = puzzleRes.unlockedCount;
       }
 
       // If this was a Daily Challenge hand, reward Crown
