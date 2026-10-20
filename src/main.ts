@@ -350,7 +350,7 @@ class SolitaireApp {
         target.classList.add('active');
         const deck = target.dataset.deck || 'fantasy';
         document.body.classList.remove(
-          'deck-fantasy', 'deck-greek', 'deck-pinup', 'deck-hentai', 'deck-kamasutra',
+          'deck-fantasy', 'deck-greek', 'deck-pinup', 'deck-hentai', 'deck-kamasutra', 'deck-mario-waifu',
           'deck-classic', 'deck-modern', 'deck-midnight', 'deck-crown',
           'card-faces-classic', 'card-faces-modern'
         );
@@ -1341,7 +1341,7 @@ class SolitaireApp {
     // 2. Deck Face Theme (defaults to Dark Fantasy Gilded)
     const savedDeck = localStorage.getItem('solitaire_card_style_v2') || 'fantasy';
     document.body.classList.remove(
-      'deck-fantasy', 'deck-greek', 'deck-pinup', 'deck-hentai', 'deck-kamasutra',
+      'deck-fantasy', 'deck-greek', 'deck-pinup', 'deck-hentai', 'deck-kamasutra', 'deck-mario-waifu',
       'deck-classic', 'deck-modern', 'deck-midnight', 'deck-crown'
     );
     document.body.classList.add(`deck-${savedDeck}`);

@@ -1,5 +1,6 @@
 import { Card, Suit } from '../game/types';
 import { getSuitColor, getRankLabel } from '../game/deck';
+import { getMarioWaifuAce, getMarioWaifuPortrait } from '../cardDeckMario';
 
 export type DeckPackId =
   | 'fantasy'
@@ -10,7 +11,8 @@ export type DeckPackId =
   | 'classic'
   | 'modern'
   | 'midnight'
-  | 'crown';
+  | 'crown'
+  | 'mario-waifu';
 
 const CUSTOM_ART_PACKS = new Set<string>(['greek', 'pinup', 'hentai', 'kamasutra']);
 
@@ -120,6 +122,9 @@ export class CardRenderer {
   }
 
   private static getCourtPortraitMarkup(rank: number, suit: Suit): string {
+    if (this.currentDeck === 'mario-waifu' && (rank === 11 || rank === 12)) {
+      return `<div class="art-layer character-art court-portrait mario-court-portrait">${getMarioWaifuPortrait(rank === 12 ? 'Q' : 'J', suit)}</div>`;
+    }
     const role = rank === 13 ? 'king' : rank === 12 ? 'queen' : 'jack';
     const src = this.getCourtImageSrc(this.currentDeck, role, suit);
     return `
@@ -135,6 +140,9 @@ export class CardRenderer {
     }
 
     if (card.rank === 1) {
+      if (this.currentDeck === 'mario-waifu' && card.suit === 'spades') {
+        return `<div class="art-layer ace-art-layer mario-ace-layer">${getMarioWaifuAce(card.suit)}</div>`;
+      }
       const nebulaId = color === 'red' ? 'rubyNebula' : 'nebulaGlow';
       const innerKnotStroke = color === 'red' ? '#fda4af' : '#7dd3fc';
       return `
