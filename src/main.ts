@@ -819,9 +819,7 @@ class SolitaireApp {
           const card = pile[i];
           const isTop = i === pile.length - 1;
           const isMovedHere = isTop && movedSet.has(card.id) && action?.targetPile?.type === 'foundation' && action.targetPile.index === f;
-          const cardEl = CardRenderer.createCardElement(card, false, {
-            isMoving: isMovedHere && !prevCardRects.has(card.id)
-          });
+          const cardEl = CardRenderer.createCardElement(card);
           cardEl.style.zIndex = isTop ? '2' : '1';
 
           if (isTop) {
@@ -829,25 +827,7 @@ class SolitaireApp {
           }
           fEl.appendChild(cardEl);
 
-          if (isMovedHere && prevCardRects.has(card.id) && typeof cardEl.animate === 'function') {
-            const prevRect = prevCardRects.get(card.id)!;
-            const targetRect = fEl.getBoundingClientRect();
-            const dx = prevRect.left - targetRect.left;
-            const dy = prevRect.top - targetRect.top;
-            if (Math.abs(dx) > 2 || Math.abs(dy) > 2) {
-              cardEl.style.zIndex = '400';
-              const anim = cardEl.animate(
-                [
-                  { transform: `translate3d(${dx}px, ${dy}px, 0) scale(1.05)` },
-                  { transform: 'translate3d(0, 0, 0) scale(1)' }
-                ],
-                { duration: 165, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' }
-              );
-              anim.onfinish = () => {
-                cardEl.style.zIndex = '2';
-              };
-            }
-          }
+          if (isMovedHere) this.animateMovedCard(cardEl, prevCardRects.get(card.id), '2');
         }
       } else {
         placeholder.classList.remove('hidden');
@@ -882,7 +862,7 @@ class SolitaireApp {
           isFlipping: isFlippedNow,
           isDealing: isDealAction,
           dealDelayMs: isDealAction ? (colIdx * 38 + rowIdx * 16) : 0,
-          isMoving: isMovedNow && !isFlippedNow
+          isMoving: false
         });
         cardEl.style.top = `${currentTop}px`;
         cardEl.style.zIndex = `${rowIdx + 1}`;
@@ -895,6 +875,10 @@ class SolitaireApp {
         }
 
         colEl.appendChild(cardEl);
+
+        if (isMovedNow && !isFlippedNow) {
+          this.animateMovedCard(cardEl, prevCardRects.get(card.id), `${rowIdx + 1}`);
+        }
       });
     }
 
@@ -919,6 +903,31 @@ class SolitaireApp {
       this.stopAutoFinish();
       this.handleGameWon();
     }
+  }
+
+  private animateMovedCard(cardEl: HTMLElement, previousRect: DOMRect | undefined, restingZIndex: string): void {
+    if (!previousRect || typeof cardEl.animate !== 'function') return;
+
+    const targetRect = cardEl.getBoundingClientRect();
+    const dx = previousRect.left - targetRect.left;
+    const dy = previousRect.top - targetRect.top;
+    if (Math.abs(dx) <= 2 && Math.abs(dy) <= 2) return;
+
+    cardEl.style.zIndex = '400';
+    const animation = cardEl.animate(
+      [
+        { transform: `translate3d(${dx}px, ${dy}px, 0) scale(1.04)` },
+        { transform: 'translate3d(0, 0, 0) scale(1)' }
+      ],
+      {
+        duration: 260,
+        easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+        fill: 'both'
+      }
+    );
+    animation.onfinish = () => {
+      cardEl.style.zIndex = restingZIndex;
+    };
   }
 
   private highlightHint(hint: { from: { type: string; index: number }; to: { type: string; index: number } }): void {
