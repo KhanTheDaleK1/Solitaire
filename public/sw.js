@@ -1,4 +1,4 @@
-const CACHE_NAME = 'solitaire-pwa-v12';
+const CACHE_NAME = 'solitaire-pwa-v13';
 const PRECACHE_ASSETS = [
   '/',
   '/index.html',
@@ -65,7 +65,19 @@ const PRECACHE_ASSETS = [
   '/cards/kamasutra/jack-hearts.jpg',
   '/cards/kamasutra/jack-spades.jpg',
   '/cards/kamasutra/jack-diamonds.jpg',
-  '/cards/kamasutra/jack-clubs.jpg'
+  '/cards/kamasutra/jack-clubs.jpg',
+  '/cards/mario-waifu/queen-hearts.jpg',
+  '/cards/mario-waifu/queen-spades.jpg',
+  '/cards/mario-waifu/queen-diamonds.jpg',
+  '/cards/mario-waifu/queen-clubs.jpg',
+  '/cards/mario-waifu/king-hearts.jpg',
+  '/cards/mario-waifu/king-spades.jpg',
+  '/cards/mario-waifu/king-diamonds.jpg',
+  '/cards/mario-waifu/king-clubs.jpg',
+  '/cards/mario-waifu/jack-hearts.jpg',
+  '/cards/mario-waifu/jack-spades.jpg',
+  '/cards/mario-waifu/jack-diamonds.jpg',
+  '/cards/mario-waifu/jack-clubs.jpg'
 ];
 
 self.addEventListener('install', (event) => {

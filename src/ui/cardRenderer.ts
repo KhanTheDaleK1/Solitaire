@@ -1,6 +1,6 @@
 import { Card, Suit } from '../game/types';
 import { getSuitColor, getRankLabel } from '../game/deck';
-import { getMarioWaifuAce, getMarioWaifuPortrait } from '../cardDeckMario';
+import { getMarioWaifuAce } from '../cardDeckMario';
 
 export type DeckPackId =
   | 'fantasy'
@@ -14,7 +14,7 @@ export type DeckPackId =
   | 'crown'
   | 'mario-waifu';
 
-const CUSTOM_ART_PACKS = new Set<string>(['greek', 'pinup', 'hentai', 'kamasutra']);
+const CUSTOM_ART_PACKS = new Set<string>(['greek', 'pinup', 'hentai', 'kamasutra', 'mario-waifu']);
 
 export class CardRenderer {
   private static frontMarkupCache = new Map<string, string>();
@@ -122,9 +122,6 @@ export class CardRenderer {
   }
 
   private static getCourtPortraitMarkup(rank: number, suit: Suit): string {
-    if (this.currentDeck === 'mario-waifu' && (rank === 11 || rank === 12)) {
-      return `<div class="art-layer character-art court-portrait mario-court-portrait">${getMarioWaifuPortrait(rank === 12 ? 'Q' : 'J', suit)}</div>`;
-    }
     const role = rank === 13 ? 'king' : rank === 12 ? 'queen' : 'jack';
     const src = this.getCourtImageSrc(this.currentDeck, role, suit);
     return `
