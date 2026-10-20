@@ -74,7 +74,7 @@ export interface MetaProgression {
   piecesCollected: number;
   puzzlesCompleted: number;
   badgesEarned: number;
-  puzzleProgress?: Record<string, number[]>; // puzzleId -> array of unlocked piece indices (0..15)
+  puzzleProgress?: Record<string, number[]>; // puzzleId -> array of unlocked piece indices (0..11)
 }
 
 export interface UserStats {

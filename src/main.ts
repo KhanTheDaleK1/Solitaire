@@ -46,8 +46,10 @@ class SolitaireApp {
   private calYear: number = 2026;
   private calMonth: number = 9; // 0-indexed (9 = October)
   private selectedDate: string = '2026-10-19';
-  private activePuzzleId: string = 'autumn_cabin';
+  private activePuzzleId: string = MOBILITYWARE_PUZZLES[0].id;
   private lastAnimatedTimestamp: number = 0;
+  private jigsawLayouts: Record<string, number[]> = this.loadJigsawLayouts();
+  private selectedJigsawSlot: number | null = null;
 
   constructor() {
     this.engine = new SolitaireEngine(1);
@@ -255,7 +257,7 @@ class SolitaireApp {
         // Switch to next incomplete puzzle if current is complete
         const stats = this.statsManager.getStats();
         const nextIncomplete = MOBILITYWARE_PUZZLES.find(
-          p => (stats.meta.puzzleProgress?.[p.id]?.length || 0) < 16
+          p => (stats.meta.puzzleProgress?.[p.id]?.length || 0) < p.pieceCount
         );
         if (nextIncomplete) {
           this.activePuzzleId = nextIncomplete.id;
@@ -263,6 +265,12 @@ class SolitaireApp {
           this.renderPuzzlesModal(nextRes.unlockedIndex ?? undefined);
         }
       }
+    });
+
+    document.getElementById('btn-shuffle-puzzle')?.addEventListener('click', () => {
+      this.shuffleJigsaw(this.activePuzzleId);
+      this.sound.playCardFlip();
+      this.renderPuzzlesModal();
     });
 
     // Calendar navigation & actions
@@ -1008,7 +1016,7 @@ class SolitaireApp {
     const puzEl = document.getElementById('v-puzzle-reward');
     if (puzEl) {
       puzEl.textContent = reward.unlockedPiece !== null
-        ? `🧩 Puzzle Piece #${reward.unlockedPiece + 1} Unlocked!`
+        ? `🧩 +${reward.unlockedPieceCount} Puzzle Pieces Unlocked!`
         : `🏅 All Puzzle Pieces Collected!`;
     }
 
@@ -1165,13 +1173,13 @@ class SolitaireApp {
 
     MOBILITYWARE_PUZZLES.forEach((puz) => {
       const unlockedArr = meta.puzzleProgress?.[puz.id] || [];
-      const isComplete = unlockedArr.length >= 16;
+      const isComplete = unlockedArr.length >= puz.pieceCount;
       const btn = document.createElement('button');
       btn.className = `puzzle-tab-btn ${puz.id === this.activePuzzleId ? 'active' : ''} ${isComplete ? 'completed' : ''}`;
       btn.innerHTML = `
         <span class="puz-tab-icon">${puz.icon}</span>
         <span class="puz-tab-name">${puz.name}</span>
-        <span class="puz-tab-count">${unlockedArr.length}/16</span>
+        <span class="puz-tab-count">${unlockedArr.length}/${puz.pieceCount}</span>
       `;
       btn.addEventListener('click', () => {
         this.activePuzzleId = puz.id;
@@ -1183,50 +1191,119 @@ class SolitaireApp {
 
     const activeDef = MOBILITYWARE_PUZZLES.find(p => p.id === this.activePuzzleId) || MOBILITYWARE_PUZZLES[0];
     const unlockedPieces = meta.puzzleProgress?.[activeDef.id] || [];
+    const layout = this.getJigsawLayout(activeDef.id, unlockedPieces);
+    const solved = unlockedPieces.length === activeDef.pieceCount && layout.every((piece, slot) => piece === slot);
 
     document.getElementById('jigsaw-active-title')!.textContent = `${activeDef.icon} ${activeDef.name} (${activeDef.theme})`;
-    document.getElementById('jigsaw-active-progress')!.textContent = unlockedPieces.length >= 16
-      ? `${activeDef.badgeEmoji} COMPLETED!`
-      : `${unlockedPieces.length} / 16 Pieces`;
+    document.getElementById('jigsaw-active-progress')!.textContent = unlockedPieces.length >= activeDef.pieceCount
+      ? (solved ? `${activeDef.badgeEmoji} SOLVED!` : `${unlockedPieces.length} / ${activeDef.pieceCount} Pieces`)
+      : `${unlockedPieces.length} / ${activeDef.pieceCount} Pieces`;
+    document.getElementById('jigsaw-status')!.textContent = solved
+      ? 'Puzzle solved! Shuffle it to play again.'
+      : unlockedPieces.length < 2
+        ? 'Unlock at least two pieces to begin arranging the puzzle.'
+        : 'Tap two unlocked pieces to swap them into place.';
 
     const boardEl = document.getElementById('jigsaw-board')!;
     boardEl.innerHTML = '';
     boardEl.style.background = `linear-gradient(135deg, ${activeDef.colors[0]} 0%, ${activeDef.colors[1]} 60%, ${activeDef.colors[2]} 100%)`;
 
-    for (let idx = 0; idx < 16; idx++) {
-      const isUnlocked = unlockedPieces.includes(idx);
-      const isNew = idx === newlyUnlockedIndex;
+    for (let idx = 0; idx < activeDef.pieceCount; idx++) {
+      const pieceIndex = layout[idx];
+      const isUnlocked = pieceIndex !== -1;
+      const isNew = pieceIndex === newlyUnlockedIndex;
       const cell = document.createElement('div');
-      cell.className = `jigsaw-cell ${isUnlocked ? 'unlocked' : 'locked'} ${isNew ? 'just-unlocked' : ''}`;
-
-      const row = Math.floor(idx / 4);
-      const col = idx % 4;
+      const isCorrect = isUnlocked && pieceIndex === idx;
+      cell.className = `jigsaw-cell ${isUnlocked ? 'unlocked' : 'locked'} ${isCorrect ? 'correct' : ''} ${isNew ? 'just-unlocked' : ''}`;
+      cell.dataset.slot = idx.toString();
 
       if (isUnlocked) {
-        // Show scenic SVG mosaic tile with central emblem on center pieces
         let centerDecor = '';
-        if (row === 1 && col === 1) centerDecor = `<span class="jigsaw-art-emblem">${activeDef.icon}</span>`;
-        if (row === 2 && col === 2) centerDecor = `<span class="jigsaw-art-emblem">${activeDef.badgeEmoji}</span>`;
+        if (pieceIndex === 5) centerDecor = `<span class="jigsaw-art-emblem">${activeDef.icon}</span>`;
+        if (pieceIndex === 10) centerDecor = `<span class="jigsaw-art-emblem">${activeDef.badgeEmoji}</span>`;
+        cell.style.background = `linear-gradient(135deg, ${activeDef.colors[0]} 0%, ${activeDef.colors[1]} 60%, ${activeDef.colors[2]} 100%)`;
+        cell.style.backgroundPosition = `${(pieceIndex % 4) * 33.333}% ${Math.floor(pieceIndex / 4) * 33.333}%`;
         cell.innerHTML = `
           ${centerDecor}
-          <span class="jigsaw-piece-num">#${idx + 1}</span>
+          <span class="jigsaw-piece-num">#${pieceIndex + 1}</span>
         `;
+        cell.addEventListener('click', () => this.selectJigsawSlot(idx));
       } else {
         cell.innerHTML = `
           <span class="jigsaw-lock-icon">🧩</span>
           <span class="jigsaw-piece-num">#${idx + 1}</span>
         `;
-        cell.addEventListener('click', () => {
-          const res = this.statsManager.unlockNextPuzzlePiece(activeDef.id, this.auth.getCurrentUser());
-          if (res.unlockedIndex !== null) {
-            this.sound.playFoundationPlaced(11);
-            this.renderPuzzlesModal(res.unlockedIndex);
-          }
-        });
       }
 
       boardEl.appendChild(cell);
     }
+  }
+
+  private loadJigsawLayouts(): Record<string, number[]> {
+    try {
+      const saved = localStorage.getItem('solitaire_jigsaw_layouts');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  }
+
+  private getJigsawLayout(puzzleId: string, unlockedPieces: number[]): number[] {
+    const unlocked = new Set(unlockedPieces);
+    const saved = this.jigsawLayouts[puzzleId];
+    const pieceCount = MOBILITYWARE_PUZZLES.find(puzzle => puzzle.id === puzzleId)?.pieceCount || 12;
+    if (
+      saved?.length === pieceCount &&
+      saved.filter(piece => piece !== -1).length === unlockedPieces.length &&
+      saved.every(piece => piece === -1 || unlocked.has(piece)) &&
+      unlockedPieces.every(piece => saved.includes(piece))
+    ) {
+      return saved;
+    }
+
+    const layout = Array.from({ length: pieceCount }, (_, index) => unlocked.has(index) ? index : -1);
+    this.jigsawLayouts[puzzleId] = layout;
+    localStorage.setItem('solitaire_jigsaw_layouts', JSON.stringify(this.jigsawLayouts));
+    return layout;
+  }
+
+  private shuffleJigsaw(puzzleId: string): void {
+    const stats = this.statsManager.getStats();
+    const unlockedPieces = stats.meta.puzzleProgress?.[puzzleId] || [];
+    const shuffled = [...unlockedPieces];
+    for (let index = shuffled.length - 1; index > 0; index--) {
+      const swapIndex = Math.floor(Math.random() * (index + 1));
+      [shuffled[index], shuffled[swapIndex]] = [shuffled[swapIndex], shuffled[index]];
+    }
+    const pieceCount = MOBILITYWARE_PUZZLES.find(puzzle => puzzle.id === puzzleId)?.pieceCount || 12;
+    const layout = Array.from({ length: pieceCount }, () => -1);
+    unlockedPieces.forEach((_, slot) => { layout[slot] = shuffled[slot]; });
+    this.jigsawLayouts[puzzleId] = layout;
+    this.selectedJigsawSlot = null;
+    localStorage.setItem('solitaire_jigsaw_layouts', JSON.stringify(this.jigsawLayouts));
+  }
+
+  private selectJigsawSlot(slot: number): void {
+    if (this.selectedJigsawSlot === null) {
+      this.selectedJigsawSlot = slot;
+      this.renderPuzzlesModal();
+      document.querySelector(`[data-slot="${slot}"]`)?.classList.add('selected');
+      return;
+    }
+
+    if (this.selectedJigsawSlot === slot) {
+      this.selectedJigsawSlot = null;
+      this.renderPuzzlesModal();
+      return;
+    }
+
+    const layout = this.jigsawLayouts[this.activePuzzleId];
+    [layout[this.selectedJigsawSlot], layout[slot]] = [layout[slot], layout[this.selectedJigsawSlot]];
+    this.jigsawLayouts[this.activePuzzleId] = layout;
+    this.selectedJigsawSlot = null;
+    localStorage.setItem('solitaire_jigsaw_layouts', JSON.stringify(this.jigsawLayouts));
+    this.sound.playCardPlace();
+    this.renderPuzzlesModal();
   }
 
   private renderStatsModal(): void {

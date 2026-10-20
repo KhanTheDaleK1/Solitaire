@@ -523,16 +523,19 @@
           <!-- Puzzle Selector Tabs -->
           <div id="puzzle-selector" class="puzzle-selector"></div>
 
-          <!-- Interactive 4x4 Jigsaw Board -->
+          <!-- Interactive 4x3 Jigsaw Board -->
           <div class="jigsaw-frame">
             <div class="jigsaw-header-row">
               <span id="jigsaw-active-title" class="jigsaw-active-title">🏡 Autumn Cabin</span>
-              <span id="jigsaw-active-progress" class="jigsaw-active-progress">14 / 16 Pieces</span>
+              <div class="jigsaw-header-actions">
+                <span id="jigsaw-active-progress" class="jigsaw-active-progress">14 / 16 Pieces</span>
+                <button id="btn-shuffle-puzzle" class="jigsaw-shuffle-btn" title="Shuffle puzzle">↻</button>
+              </div>
             </div>
             <div id="jigsaw-board" class="jigsaw-board"></div>
           </div>
 
-          <p class="puzzle-hint-text">Win Solitaire hands and Daily Challenges to unlock new puzzle pieces and earn collectible event badges!</p>
+          <p id="jigsaw-status" class="puzzle-hint-text">Tap two unlocked pieces to swap them into place.</p>
 
           <button id="btn-claim-free-piece" class="btn-primary">
             <span>🎁 Claim Bonus Puzzle Piece</span>
